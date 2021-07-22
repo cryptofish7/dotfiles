@@ -1,7 +1,6 @@
 # Other Installations
--Install nodejs
--Install vim-plug
--Setup `~/.config/nvim/init.vim` to point to `.vimrc`
+
+- Install following brew packages:
 
 ```
 brew install neovim
@@ -12,7 +11,18 @@ brew install ripgrep
 brew install python3
 ```
 
--Install coc plugins:
+- Install nodejs
+- Install vim-plug
+- Setup `~/.config/nvim/init.vim` to point to `.vimrc`:
+
+```
+set runtimepath^=~/.vim runtimepath+=~/.vim/after
+let &packpath=&runtimepath
+source ~/.vimrc
+```
+
+- Install coc plugins:
+
 ```
 :CocInstall coc-eslint
 :CocInstall coc-prettier
