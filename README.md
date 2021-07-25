@@ -21,13 +21,6 @@ let &packpath=&runtimepath
 source ~/.vimrc
 ```
 
-- Install coc plugins:
-
-```
-:CocInstall coc-eslint
-:CocInstall coc-prettier
-```
-
 # Setup
 ```
 ./dotfiles_out.sh
