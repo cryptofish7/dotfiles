@@ -12,12 +12,11 @@ set nobackup       " Disable backup
 set laststatus=2   " Show status line
 set statusline=%F%m%r%h%w%=(%{&ff}/%Y)\ (line\ %l\/%L,\ col\ %c)”
 set wildmenu       " Display command line's tab complete options as a menu
-set directory=$HOME/.vim/swp// " Store swp files in its own folder
-set undodir=$HOME/.vim/undodir " Store undo files in its own folder
 set showcmd        " Show cmd in bottom right screen
 set cursorline     " Highlight current line
 set cursorcolumn   " Highlight current column
 set hlsearch       " Highlight searches
+set noswapfile     " Avoid swap files
 
 " Set screen width and textwrap
 highlight ColorColumn ctermbg=gray
@@ -29,24 +28,21 @@ autocmd FileType * set formatoptions=croqtn
 call plug#begin('~/.vim/plugged')
 
 Plug 'scrooloose/nerdtree'
-Plug 'morhetz/gruvbox'
 Plug 'tpope/vim-commentary'
 Plug '/usr/local/opt/fzf'
 Plug 'junegunn/fzf.vim'
-Plug 'mindriot101/vim-yapf'
 Plug 'alvan/vim-closetag'
-Plug 'jiangmiao/auto-pairs'
 Plug 'pangloss/vim-javascript'
 Plug 'leafgarland/typescript-vim'
 Plug 'MaxMEllon/vim-jsx-pretty'
-" Plug 'mxw/vim-jsx'
-Plug 'peitalin/vim-jsx-typescript'
+" Plug 'peitalin/vim-jsx-typescript'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'Yggdroot/indentLine'
 Plug 'sainnhe/gruvbox-material'
 Plug 'lervag/vimtex'
-Plug 'sirver/ultisnips'
+" Plug 'sirver/ultisnips'
 Plug 'mbbill/undotree'
+Plug 'tomlion/vim-solidity'
 
 call plug#end()
 
@@ -58,12 +54,6 @@ nnoremap <localleader><localleader>c :PlugClean<CR>
 nnoremap <C-m> :UndotreeToggle<CR>
 nnoremap <C-a> g-
 nnoremap <C-q> g+
-
-" indent line ruler settings
-let g:indentLine_enabled = 1
-let g:indentLine_char = '┊'
-let g:indentLine_concealcursor = ""
-let g:indentLine_fileTypeExclude = ['json', 'md', 'tex']
 
 " theme and terminal colour scheme settings
 let g:gruvbox_contrast_dark='dark'
@@ -119,15 +109,14 @@ let g:closetag_xhtml_filetypes = 'xhtml'
 
 " coc settings
 let g:coc_global_extensions = [
-  \ 'coc-tsserver'
+  \ 'coc-tsserver',
+  \ 'coc-eslint',
+  \ 'coc-prettier'
   \ ]
-
-" Haskell Vim settings
-let g:haskell_indent_disable = 1
 
 " Python provider settings
 let g:python_host_prog = "/usr/bin/python"
-let g:python3_hot_prog = "/usr/bin/python3"
+let g:python3_host_prog = "/usr/local/bin/python3"
 
 " Vimtex settings
 let g:tex_flavor='latex'
@@ -197,7 +186,7 @@ inoremap <silent><expr> <TAB>
 	  return !col || getline('.')[col - 1]  =~# '\s'
 	endfunction
 
-	let g:coc_snippet_next = '<tab>'
+let g:coc_snippet_next = '<tab>'
 
 " move cursor left/right in insert mode
 inoremap <C-y> <C-o>h

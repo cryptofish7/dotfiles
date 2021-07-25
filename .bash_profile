@@ -3,8 +3,8 @@ alias g='grep -i'
 alias get='curl -OL'
 alias tmux="TERM=screen-256color-bce tmux"
 alias vim='nvim'
-# alias python='python3'
-# alias pip='pip3'
+alias python='python3'
+alias pip='pip3'
 
 source ~/.git-prompt.sh
 PS1='[\W$(__git_ps1 " (%s)")]\$ '
