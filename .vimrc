@@ -21,7 +21,7 @@ set noswapfile     " Avoid swap files
 " Set screen width and textwrap
 highlight ColorColumn ctermbg=gray
 set colorcolumn=120
-autocmd BufNewFile,BufRead * setlocal formatoptions=croqtn textwidth=80  wrapmargin=80 linebreak
+autocmd BufNewFile,BufRead * setlocal formatoptions=croqtn textwidth=120 wrapmargin=120 linebreak
 autocmd FileType * set formatoptions=croqtn
 " autocmd BufNewFile,BufRead * setlocal formatoptions=croqtn textwidth=0 wrapmargin=0 wrap linebreak
 
@@ -43,6 +43,9 @@ Plug 'lervag/vimtex'
 " Plug 'sirver/ultisnips'
 Plug 'mbbill/undotree'
 Plug 'tomlion/vim-solidity'
+Plug 'jiangmiao/auto-pairs'
+Plug 'svermeulen/vim-easyclip'
+Plug 'jparise/vim-graphql'
 
 call plug#end()
 
@@ -51,7 +54,7 @@ nnoremap <localleader><localleader>i :PlugInstall<CR>
 nnoremap <localleader><localleader>c :PlugClean<CR>
 
 " Undotree toggle keybinding
-nnoremap <C-m> :UndotreeToggle<CR>
+nnoremap <C-n> :UndotreeToggle<CR>
 nnoremap <C-a> g-
 nnoremap <C-q> g+
 
@@ -151,10 +154,13 @@ function! UpdateSkim(status)
     endif
 endfunction
 
-" " Ultisnips settings
+"  Ultisnips settings
 let g:UltiSnipsExpandTrigger = '<Ctrl>'
 let g:UltiSnipsJumpForwardTrigger = '<Ctrl>'
 let g:UltiSnipsJumpBackwardTrigger = '<S-Tab>'
+
+" Easyclip settings
+let g:EasyClipPreserveCursorPositionAfterYank = 1
 
 " map leader
 let mapleader = "\<Space>"
@@ -187,10 +193,6 @@ inoremap <silent><expr> <TAB>
 	endfunction
 
 let g:coc_snippet_next = '<tab>'
-
-" move cursor left/right in insert mode
-inoremap <C-y> <C-o>h
-inoremap <C-u> <C-o>l
 
 " Visual bindings
 vmap <Space>y "+y
