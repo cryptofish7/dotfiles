@@ -21,7 +21,7 @@ set noswapfile     " Avoid swap files
 " Set screen width and textwrap
 highlight ColorColumn ctermbg=gray
 set colorcolumn=120
-autocmd BufNewFile,BufRead * setlocal formatoptions=croqtn textwidth=120 wrapmargin=120 linebreak
+" autocmd BufNewFile,BufRead * setlocal formatoptions=croqtn textwidth=120 wrapmargin=120 linebreak
 autocmd FileType * set formatoptions=croqtn
 " autocmd BufNewFile,BufRead * setlocal formatoptions=croqtn textwidth=0 wrapmargin=0 wrap linebreak
 
@@ -90,12 +90,12 @@ let g:fzf_action = {
     \ }
 command! -bang -nargs=? -complete=dir Files
   \ call fzf#vim#files(
-  \   <q-args>, {'options': ['--layout=reverse', '--info=inline', '--preview', '~/.vim/plugged/fzf.vim/bin/preview.sh {}']}, 
+  \   <q-args>, fzf#vim#with_preview({'options': ['--layout=reverse', '--info=inline']}), 
   \   <bang>0)
 command! -bang -nargs=* Rg
   \ call fzf#vim#grep(
   \   'rg --column --line-number --no-heading --color=always --smart-case -- '.shellescape(<q-args>), 1,
-  \   fzf#vim#with_preview(), <bang>0)
+  \   fzf#vim#with_preview({'options': '--delimiter : --nth 4..'}, 'up:60%'), <bang>0)
 function! s:find_git_root()
     return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
 endfunction
