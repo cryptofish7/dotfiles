@@ -120,6 +120,12 @@ let g:closetag_xhtml_filetypes = 'xhtml'
 let g:coc_global_extensions = [
   \ 'coc-tsserver',
   \ 'coc-eslint',
+  \ 'coc-prettier',
+  \ 'coc-highlight',
+  \ 'coc-python',
+  \ 'coc-json',
+  \ 'coc-css',
+  \ 'coc-html'
   \ ]
 
 " Python provider settings
