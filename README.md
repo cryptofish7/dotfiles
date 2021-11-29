@@ -10,7 +10,7 @@ chsh -s /bin/bash
 ```
 brew install neovim
 brew install tmux
-brew install reattach-to-usernamespace
+brew install reattach-to-user-namespace
 brew install fzf
 brew install ripgrep
 brew install python3
