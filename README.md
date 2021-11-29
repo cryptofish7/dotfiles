@@ -1,5 +1,10 @@
 # Other Installations
 
+- Use bash as default:
+```
+chsh -s /bin/bash
+```
+
 - Install following brew packages:
 
 ```
