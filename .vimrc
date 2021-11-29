@@ -3,9 +3,6 @@ filetype indent on " Enable indenting for files
 set backspace=indent,eol,start " Allow backspacing over indentation
 set nocompatible   " Use VIM settings rather than Vi settings
 set expandtab      " Use spaces instead of tab
-set softtabstop=2  " Indent by 2 spaces when hitting tab
-set shiftwidth=2   " Indent by 4 spaces when auto-indenting
-set tabstop=2      " Show existing tab with 4 spaces width
 set autoindent     " Enable auto indenting
 set number         " Enable line numbers
 set nobackup       " Disable backup
@@ -18,9 +15,18 @@ set cursorcolumn   " Highlight current column
 set hlsearch       " Highlight searches
 set noswapfile     " Avoid swap files
 
+" By default, the indent is 2 spaces
+set softtabstop=2  " Indent by 2 spaces when hitting tab
+set shiftwidth=2   " Indent by 2 spaces when auto-indenting
+set tabstop=2      " Show existing tab with 2 spaces width
+
+" For solidity, 4 spaces
+autocmd Filetype solidity setlocal ts=4 sw=4 sts=4
+
+
 " Set screen width and textwrap
 highlight ColorColumn ctermbg=gray
-set colorcolumn=120
+set colorcolumn=80
 " autocmd BufNewFile,BufRead * setlocal formatoptions=croqtn textwidth=120 wrapmargin=120 linebreak
 autocmd FileType * set formatoptions=croqtn
 " autocmd BufNewFile,BufRead * setlocal formatoptions=croqtn textwidth=0 wrapmargin=0 wrap linebreak
@@ -114,7 +120,6 @@ let g:closetag_xhtml_filetypes = 'xhtml'
 let g:coc_global_extensions = [
   \ 'coc-tsserver',
   \ 'coc-eslint',
-  \ 'coc-prettier'
   \ ]
 
 " Python provider settings
