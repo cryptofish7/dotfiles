@@ -41,7 +41,7 @@ Plug 'alvan/vim-closetag'
 Plug 'pangloss/vim-javascript'
 Plug 'leafgarland/typescript-vim'
 Plug 'MaxMEllon/vim-jsx-pretty'
-" Plug 'peitalin/vim-jsx-typescript'
+Plug 'peitalin/vim-jsx-typescript'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'Yggdroot/indentLine'
 Plug 'sainnhe/gruvbox-material'
@@ -52,6 +52,7 @@ Plug 'tomlion/vim-solidity'
 Plug 'jiangmiao/auto-pairs'
 Plug 'svermeulen/vim-easyclip'
 Plug 'jparise/vim-graphql'
+Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install'  }
 
 call plug#end()
 
@@ -122,10 +123,10 @@ let g:coc_global_extensions = [
   \ 'coc-eslint',
   \ 'coc-prettier',
   \ 'coc-highlight',
-  \ 'coc-python',
   \ 'coc-json',
   \ 'coc-css',
-  \ 'coc-html'
+  \ 'coc-html',
+  \ 'coc-pyright',
   \ ]
 
 " Python provider settings

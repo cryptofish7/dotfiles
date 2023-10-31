@@ -7,6 +7,7 @@ alias python='python3'
 alias pip='pip3'
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
+eval `ssh-agent -s`
 
 source ~/.git-prompt.sh
 PS1='[\W$(__git_ps1 " (%s)")]\$ '
@@ -18,3 +19,19 @@ export FZF_DEFAULT_COMMAND='rg --files --no-ignore-vcs --hidden'
     [ -f "$(brew --prefix)/etc/bash_completion.d/git-completion.bash" ] && \
         . $(brew --prefix)/etc/bash_completion.d/git-completion.bash
 }
+
+export PATH="$HOME/.poetry/bin:$PATH"
+export N_PREFIX=$HOME/.n
+export PATH="$N_PREFIX/bin:$PATH"
+
+# Created by `pipx` on 2022-03-16 01:27:07
+export PATH="$PATH:/Users/cryptofish/.local/bin"
+
+# Created by `pipx` on 2022-03-16 01:27:07
+export PATH="$PATH:/Users/cryptofish/Library/Python/3.8/bin"
+
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+export PATH="$HOME/.cargo/env:$PATH"
