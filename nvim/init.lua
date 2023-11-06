@@ -668,9 +668,6 @@ require('nvim-tree').setup {
     renderer = {
         group_empty = true,
     },
-    filters = {
-        dotfiles = true,
-    },
     on_attach = my_on_attach,
     actions = {
         open_file = {
