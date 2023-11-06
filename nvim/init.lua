@@ -578,7 +578,7 @@ local servers = {
     eslint = {},
     jsonls = {},
     marksman = {},
-    solang = {},
+    solidity = {},
 
     lua_ls = {
         Lua = {
@@ -719,6 +719,7 @@ nls.setup {
         cda.eslint_d,
         cda.shellcheck,
     },
+    -- Format on save
     on_attach = function(client, bufnr)
         if client.supports_method 'textDocument/formatting' then
             vim.api.nvim_clear_autocmds { group = augroup, buffer = bufnr }
@@ -731,4 +732,8 @@ nls.setup {
             })
         end
     end,
+    -- Extra filetypes
+    fmt.prettierd.with {
+        extra_filetypes = { 'solidity' },
+    },
 }
