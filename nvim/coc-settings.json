@@ -1,0 +1,16 @@
+{
+  "coc.preferences.formatOnSaveFiletypes": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "python",
+    "solidity",
+    "json",
+    "markdown",
+    "css",
+    "html"
+  ],
+  "python.formatting.provider": "black",
+  "python.formatting.blackPath": "/Users/cryptofish/.local/bin/black"
+}
