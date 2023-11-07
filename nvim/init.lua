@@ -525,6 +525,11 @@ local on_attach = function(client, bufnr)
         print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
     end, '[W]orkspace [L]ist Folders')
 
+    -- Create a command `:Format` local to the LSP buffer
+    vim.api.nvim_buf_create_user_command(bufnr, 'LspFormat', function(_)
+        vim.lsp.buf.format()
+    end, { desc = 'Format current buffer with LSP' })
+
     -- Use null-ls for formatting
     local augroup = vim.api.nvim_create_augroup('LspFormatting', {})
     if client.supports_method 'textDocument/formatting' then
@@ -620,6 +625,12 @@ local luasnip = require 'luasnip'
 require('luasnip.loaders.from_vscode').lazy_load()
 luasnip.config.setup {}
 
+local has_words_before = function()
+    unpack = unpack or table.unpack
+    local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+    return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match '%s' == nil
+end
+
 cmp.setup {
     snippet = {
         expand = function(args)
@@ -632,7 +643,18 @@ cmp.setup {
         ['<C-d>'] = cmp.mapping.scroll_docs(-4),
         ['<C-f>'] = cmp.mapping.scroll_docs(4),
         ['<C-Space>'] = cmp.mapping.complete {},
-        ['<Tab>'] = cmp.mapping.confirm {},
+        -- ['<Tab>'] = cmp.mapping.confirm {},
+        ['<Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+                cmp.confirm {}
+            elseif luasnip.expand_or_jumpable() then
+                luasnip.expand_or_jump()
+            elseif has_words_before() then
+                cmp.complete()
+            else
+                fallback()
+            end
+        end),
     },
     sources = {
         { name = 'nvim_lsp' },
