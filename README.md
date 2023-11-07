@@ -1,6 +1,6 @@
 # My Dotfiles
 
-My preferred setup is Neovim + Tmux + Mac OS Terminal.
+My preferred setup is Neovim + Tmux + Mac OS Terminal + Bash..
 
 This repo mainly contains my configurations to get those going.
 
@@ -12,7 +12,9 @@ To get started, you will need to first install:
 - [fzf](https://github.com/junegunn/fzf) and [ripgrep](https://github.com/BurntSushi/ripgrep), which are required for telescope.
 - As well as any linters/formatters like prettierd.
 
-Then simply clone this repo into your home folder (`~`) to load the settings. 
+Clone this repo into your home folder (`~`) to load the settings. 
+
+Then copy .bash_profile to ~/.bash_profile to load bash settings.
 
 Lastly, import `terminal_settings.terminal` into terminal and you're good to go.
 
