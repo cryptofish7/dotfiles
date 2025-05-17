@@ -225,6 +225,9 @@ require('lazy').setup({
         },
     },
 
+    -- Autocomplete HTML tags
+    { 'windwp/nvim-ts-autotag', opts = {} },
+
     {
         -- Highlight, edit, and navigate code
         'nvim-treesitter/nvim-treesitter',
@@ -233,9 +236,6 @@ require('lazy').setup({
         },
         build = ':TSUpdate',
     },
-
-    -- Autocomplete HTML tags
-    { 'windwp/nvim-ts-autotag', opts = {} },
 
     -- Autocomplete close parentheses
     { 'windwp/nvim-autopairs', event = 'InsertEnter', opts = {} },
@@ -300,11 +300,11 @@ vim.o.clipboard = 'unnamedplus'
 vim.o.breakindent = true
 
 -- Save undo history
-vim.o.undofile = true
+vim.o.undofile = false
 
 -- Case-insensitive searching UNLESS \C or capital in search
-vim.o.ignorecase = true
-vim.o.smartcase = true
+vim.o.ignorecase = false
+vim.o.smartcase = false
 
 -- Keep signcolumn on by default
 vim.wo.signcolumn = 'yes'
@@ -375,6 +375,13 @@ require('telescope').setup {
             },
         },
     },
+    pickers = {
+        find_files = {
+            hidden = true,
+            file_ignore_patterns = { 'node_modules', '.git', '.venv' },
+            no_ignore = true,
+        },
+    },
 }
 
 -- Enable telescope fzf native, if installed
@@ -392,7 +399,7 @@ end, { desc = '[/] Fuzzily search in current buffer' })
 vim.keymap.set('n', '<C-p>', require('telescope.builtin').find_files, { desc = '[S]earch [F]iles' })
 vim.keymap.set('n', '<leader>h', require('telescope.builtin').help_tags, { desc = '[S]earch [H]elp' })
 vim.keymap.set('n', '<S-f>', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
-vim.keymap.set('n', '<leader>d', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
+vim.keymap.set('n', '<leader>e', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
@@ -473,6 +480,9 @@ vim.defer_fn(function()
                 },
             },
         },
+        autotag = {
+            enable_close_on_slash = false,
+        },
     }
 end, 0)
 
@@ -484,7 +494,7 @@ vim.keymap.set('n', 'g=', 'g+')
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
+vim.keymap.set('n', '<leader>d', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
 
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
@@ -546,6 +556,15 @@ local on_attach = function(client, bufnr)
                 }
             end,
         })
+    else
+        vim.api.nvim_clear_autocmds { group = augroup, buffer = bufnr }
+        vim.api.nvim_create_autocmd('BufWritePre', {
+            group = augroup,
+            buffer = bufnr,
+            callback = function()
+                vim.lsp.buf.format { async = true }
+            end,
+        })
     end
 end
 
@@ -577,7 +596,7 @@ local servers = {
     -- clangd = {},
     gopls = {},
     pyright = {},
-    -- rust_analyzer = {},
+    rust_analyzer = {},
     tsserver = {},
     -- html = { filetypes = { 'html', 'twig', 'hbs'} },
     eslint = {},
@@ -686,6 +705,10 @@ require('nvim-tree').setup {
     sort_by = 'case_sensitive',
     view = {
         width = 30,
+        adaptive_size = true,
+    },
+    update_focused_file = {
+        enable = true,
     },
     renderer = {
         group_empty = true,
@@ -696,11 +719,29 @@ require('nvim-tree').setup {
             quit_on_open = true,
         },
     },
+    git = {
+        enable = true,
+    },
+    filters = {
+        git_ignored = false,
+    },
 }
 
 vim.keymap.set('n', '<C-x>', ':NvimTreeToggle<CR>')
 
--- [[ Configue null-ls ]]
+-- [[Configure nvim-lualine]]
+require('lualine').setup {
+    sections = {
+        lualine_c = {
+            {
+                'filename',
+                path = 1,
+            },
+        },
+    },
+}
+
+-- [[ Configure null-ls ]]
 local nls = require 'null-ls'
 local fmt = nls.builtins.formatting
 local dgn = nls.builtins.diagnostics
