@@ -17,6 +17,7 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 # Git Prompt
 # ------------------------------
 autoload -Uz vcs_info
+zstyle ':vcs_info:git:*' formats ' (%b)'
 precmd() {
   vcs_info
   print -Pn "\e]0;%~\a"  # Set terminal title
