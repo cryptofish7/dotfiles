@@ -738,8 +738,8 @@ end
 require('nvim-tree').setup {
     sort_by = 'case_sensitive',
     view = {
-        width = 30,
-        adaptive_size = true,
+        width = 20,
+        adaptive_size = false,
     },
     update_focused_file = {
         enable = true,
