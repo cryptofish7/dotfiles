@@ -1,4 +1,25 @@
 theme = Dark+
 font-family = JetBrains Mono
 font-size = 16
+unfocused-split-opacity = 0.5
+maximize = true
 keybind = shift+enter=text:\x1b[13;2u
+
+# Pane navigation (like tmux ctrl+h/j/k/l)
+keybind = ctrl+h=goto_split:left
+keybind = ctrl+j=goto_split:bottom
+keybind = ctrl+k=goto_split:top
+keybind = ctrl+l=goto_split:right
+
+# Pane splits (like tmux C-x \ and C-x -)
+keybind = ctrl+backslash=new_split:right
+keybind = ctrl+minus=new_split:down
+
+# Close pane
+keybind = ctrl+y=close_surface
+
+# Resize panes
+keybind = ctrl+shift+up=resize_split:up,20
+keybind = ctrl+shift+down=resize_split:down,20
+keybind = ctrl+shift+left=resize_split:left,20
+keybind = ctrl+shift+right=resize_split:right,20
