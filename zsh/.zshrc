@@ -7,6 +7,7 @@ alias get='curl -OL'
 alias python='python3'
 alias pip='pip3'
 alias vim='nvim'
+alias cc='claude --dangerously-skip-permissions --chrome'
 
 # ------------------------------
 # Homebrew (Apple Silicon)
