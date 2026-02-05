@@ -20,5 +20,6 @@ ln -sf "$DOTFILES/config/karabiner" "$HOME/.config/karabiner"
 mkdir -p "$HOME/.claude"
 ln -sf "$DOTFILES/config/claude/settings.json" "$HOME/.claude/settings.json"
 ln -sfn "$DOTFILES/config/claude/skills" "$HOME/.claude/skills"
+ln -sfn "$DOTFILES/config/claude/agents" "$HOME/.claude/agents"
 
 echo "Done"

@@ -15,6 +15,7 @@ Personal macOS dev environment: Neovim + Tmux + Ghostty + Zsh.
 | `config/karabiner/` | Razer Naga mouse remapping |
 | `config/claude/settings.json` | Claude Code user-level settings (status line, plugins) |
 | `config/claude/skills/` | Claude Code user-level skills (symlinked to `~/.claude/skills/`) |
+| `config/claude/agents/` | Claude Code user-level agents (symlinked to `~/.claude/agents/`) |
 | `setup.sh` | Symlinks everything into place |
 
 ## How Symlinks Work
@@ -24,6 +25,7 @@ Personal macOS dev environment: Neovim + Tmux + Ghostty + Zsh.
 - `config/*` -> `~/.config/*`
 - `config/claude/settings.json` -> `~/.claude/settings.json`
 - `config/claude/skills/` -> `~/.claude/skills/`
+- `config/claude/agents/` -> `~/.claude/agents/`
 
 When editing configs, edit the files in this repo — the symlinks mean changes take effect immediately (after sourcing/reloading where needed). Don't flag symlinked content as duplication.
 
