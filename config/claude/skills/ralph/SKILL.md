@@ -32,7 +32,9 @@ Autonomous task runner. Discovers a project's task list, works through each task
 - Running commands (tests, linters, CI checks)
 - Trivial fixes (1-2 lines: typo, import, format issue)
 - Task tracker updates
-- Skill invocations (`/docs-consolidator`, `/ci-cd-pipeline`, `/smoke-test`)
+- Spawning audit subagents (docs, CI/CD, smoke test) — see Step 5
+
+**Autonomy**: Do NOT use `EnterPlanMode`, `AskUserQuestion`, or any other mechanism that pauses for user input. You are the decision-maker. Planning is handled by spawning Explore subagents, not by entering plan mode. The only time you stop and ask the user is when you've exhausted retries (e.g., 3 CI failures) or hit a genuinely ambiguous requirement that can't be resolved from project docs.
 
 **Context conservation**: If you find yourself writing more than ~10 lines of code, STOP and spawn a Task subagent instead. The subagent gets a fresh context window.
 
@@ -56,7 +58,7 @@ Found N incomplete tasks in [source]:
 2. ...
 ```
 
-Ask the user to confirm the task list before starting. The user may reorder, skip, or add tasks.
+Proceed with the task list in order. If the ordering seems wrong (e.g., a task depends on another that comes later), reorder as needed.
 
 ### Phase 2: Read project context
 
@@ -110,9 +112,7 @@ Use the **Task tool** with `subagent_type=Explore` to spawn a planning subagent.
 
 The Explore subagent reads code and produces a plan. It does NOT write any code.
 
-Present the plan to the user for approval. The user may request changes or ask questions before approving.
-
-**Do NOT proceed to Step 3 until the plan is approved.**
+**Review the plan yourself.** Check that it covers all files, has no obvious gaps, and aligns with the task requirements. If the plan is incomplete or unclear, spawn a new Explore subagent with more specific instructions. Do NOT ask the user to approve the plan — you are the orchestrator, you make this call.
 
 #### Step 3: Implement the plan
 
@@ -141,12 +141,13 @@ Run the project's linting, formatting, type checking, and test commands. Check t
 
 #### Step 5: Audit docs, CI/CD, and deploy script (parallel)
 
-Run these concurrently — they are independent:
-- `/docs-consolidator` — audit and sync project docs
-- `/ci-cd-pipeline` — ensure GitHub Actions matches current state
-- `/smoke-test` — update deploy.sh with smoke tests for any new functionality
+Spawn these as **parallel Task subagents** (`subagent_type=general-purpose`). Each subagent gets the relevant skill instructions and an explicit directive: "Execute autonomously. Do not ask the user for approval — review your own plan and proceed."
 
-Skip any if the skill is unavailable. Wait for all to complete before proceeding.
+- **Docs audit**: Pass the docs-consolidator skill instructions. The subagent audits and consolidates project docs.
+- **CI/CD audit**: Pass the ci-cd-pipeline skill instructions. The subagent ensures GitHub Actions matches the current project state.
+- **Smoke test update**: Pass the smoke-test skill instructions. The subagent updates deploy.sh with smoke tests for new functionality.
+
+Skip any if the skill is unavailable. Wait for all subagents to complete before proceeding.
 
 #### Step 6: Commit all changes
 
@@ -222,7 +223,7 @@ If any tasks were skipped or need user attention, list them separately.
 
 ## Guidelines
 
-- Always confirm the task list with the user before starting work.
+- Start working immediately after discovering tasks. Don't ask the user to confirm the task list.
 - One task = one branch = one PR. Don't batch unrelated tasks.
 - If a task is too vague to implement, ask the user for clarification rather than guessing.
 - If the post-task pipeline requires user input (e.g., CI failure after 3 retries), pause the loop and wait for the user before continuing to the next task.

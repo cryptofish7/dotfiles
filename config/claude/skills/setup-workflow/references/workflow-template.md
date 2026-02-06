@@ -24,8 +24,8 @@
 
 **Development flow:**
 
-1. **Plan**: Use the Task tool to spawn an Explore subagent. Pass it the task description, file structure, and relevant docs. It reads code and returns an implementation plan. Present the plan to the user for approval.
-2. **Implement**: After approval, use the Task tool to spawn an implementation subagent. Pass it the full approved plan and CLAUDE.md conventions. The subagent writes all code and tests.
+1. **Plan**: Use the Task tool to spawn an Explore subagent. Pass it the task description, file structure, and relevant docs. It reads code and returns an implementation plan. Review the plan yourself — check for completeness, gaps, and alignment with the task. If it's lacking, re-plan with more specific instructions. Do not ask the user to approve the plan.
+2. **Implement**: Once the plan looks solid, use the Task tool to spawn an implementation subagent. Pass it the full approved plan and CLAUDE.md conventions. The subagent writes all code and tests.
 3. **Verify**: After the subagent completes, run the full verify suite (lint, format, typecheck, test). If verification fails, spawn the `debugger` agent for test failures or a Task subagent for lint/type errors.
 4. When stuck or going in circles, stop. Re-plan before continuing.
 
@@ -34,7 +34,7 @@
 - Running commands (tests, linters, CI checks)
 - Trivial fixes (1-2 lines: typo, import, format issue)
 - Task tracker updates
-- Skill invocations (`/docs-consolidator`, `/ci-cd-pipeline`, `/smoke-test`)
+- Spawning audit subagents (docs, CI/CD, smoke test) — see Step 2 of the post-task pipeline
 
 **Verification protocol**: After any subagent writes code, the orchestrator runs the full verify suite before proceeding. Never trust subagent output without verification.
 
@@ -48,12 +48,13 @@ Run this pipeline after every completed task. No user input required unless a st
 Run the project's linting, formatting, type checking, and test commands. Check the Commands section of this file or `pyproject.toml`/`package.json`/`Makefile` for the exact commands. Fix any failures before proceeding.
 
 **Step 2: Audit docs, CI/CD, and deploy script (parallel).**
-Run these concurrently — they are independent:
-- `/docs-consolidator` — audit and sync project docs
-- `/ci-cd-pipeline` — ensure GitHub Actions matches current state
-- `/smoke-test` — update deploy.sh with smoke tests for any new functionality
+Spawn these as **parallel Task subagents** (`subagent_type=general-purpose`). Each subagent gets the relevant skill instructions and an explicit directive: "Execute autonomously. Do not ask the user for approval — review your own plan and proceed."
 
-Skip any if the skill is unavailable. Wait for all to complete before proceeding.
+- **Docs audit**: Pass the docs-consolidator skill instructions. The subagent audits and consolidates project docs.
+- **CI/CD audit**: Pass the ci-cd-pipeline skill instructions. The subagent ensures GitHub Actions matches the current project state.
+- **Smoke test update**: Pass the smoke-test skill instructions. The subagent updates deploy.sh with smoke tests for new functionality.
+
+Skip any if the skill is unavailable. Wait for all subagents to complete before proceeding.
 
 **Step 3: Commit all changes.**
 Stage and commit everything from the task and from Step 2. Write a concise, descriptive commit message. Use conventional commit prefixes when appropriate (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`, `refactor:`, `test:`).
