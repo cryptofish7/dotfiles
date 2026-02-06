@@ -7,6 +7,37 @@ description: Autonomously work through all project tasks. Finds the next incompl
 
 Autonomous task runner. Discovers a project's task list, works through each task, and runs the full development pipeline after each one — verify, document, commit, PR, review, CI, merge — until everything is done.
 
+## Orchestration Model
+
+**You are a task coordinator, not an implementer.** Your context window must last across ALL tasks in the session. Every line of code you write directly reduces your capacity for later tasks. Delegate all code generation to subagents via the Task tool. Your job is to:
+
+- Discover and sequence tasks
+- Spawn planning subagents and approve their plans
+- Spawn implementation subagents and verify their output
+- Run the post-task pipeline (verify, commit, PR, review, CI, merge)
+- Track progress using the TaskCreate/TaskUpdate tools for real-time visibility
+- Make go/no-go decisions at each gate
+
+**Subagent roster:**
+
+| Subagent | How to spawn | Purpose | Writes code? |
+|----------|-------------|---------|-------------|
+| Planner | Task tool (`subagent_type=Explore`) | Analyze code, produce implementation plan | No |
+| Implementer | Task tool (`subagent_type=general-purpose`) | Execute approved plan, write code + tests | Yes |
+| Code reviewer | `code-reviewer` agent | Review PR for bugs, security, style | No |
+| Debugger | `debugger` agent | Diagnose and fix errors, CI failures | Yes |
+
+**When the orchestrator acts directly** (exceptions):
+- Git operations (commit, branch, push, merge)
+- Running commands (tests, linters, CI checks)
+- Trivial fixes (1-2 lines: typo, import, format issue)
+- Task tracker updates
+- Skill invocations (`/docs-consolidator`, `/ci-cd-pipeline`, `/smoke-test`)
+
+**Context conservation**: If you find yourself writing more than ~10 lines of code, STOP and spawn a Task subagent instead. The subagent gets a fresh context window.
+
+**Progress tracking**: Use TaskCreate to register each pipeline step. Prefix every `subject` and `activeForm` with the responsible agent in brackets so the user can see who's doing what (e.g., `subject: "[Planner] Plan: add auth"`, `activeForm: "[Planner] Planning auth"`). Mark `in_progress` when starting, `completed` when done. The user sees live progress via `Ctrl+T`.
+
 ## Workflow
 
 ### Phase 1: Discover tasks
@@ -55,45 +86,73 @@ For each incomplete task, in order:
 --- Task [N/total]: [task title] ---
 ```
 
+Use TaskCreate to register each pipeline step. Prefix `subject` and `activeForm` with the agent name in brackets so it's visible in the UI:
+
+| Step | Subject | activeForm |
+|------|---------|------------|
+| Plan | "[Planner] Plan: [task title]" | "[Planner] Planning [task title]" |
+| Implement | "[Implementer] Implement: [task title]" | "[Implementer] Implementing [task title]" |
+| Verify | "[Orchestrator] Verify locally" | "[Orchestrator] Running verification" |
+| Docs + CI/CD + Deploy | "[Orchestrator] Docs, CI/CD, and deploy audit" | "[Orchestrator] Auditing docs, CI/CD, and deploy" |
+| Commit + PR | "[Orchestrator] Commit and open PR" | "[Orchestrator] Committing and opening PR" |
+| Review + CI | "[Reviewer] Code review and CI" | "[Reviewer] Running review and CI" |
+| Merge | "[Orchestrator] Merge PR" | "[Orchestrator] Merging PR" |
+
+Mark each `in_progress` when starting, `completed` when done.
+
 #### Step 2: Plan the task
 
-Spawn a subagent to write a thorough implementation plan. The subagent should:
+Use the **Task tool** with `subagent_type=Explore` to spawn a planning subagent. Pass it:
+- The task description (from the task tracker)
+- The project's file structure (from CLAUDE.md)
+- Any relevant architecture or reference docs
+- Specific instruction: "Produce a step-by-step implementation plan. List every file to create or modify, the changes needed in each, and any risks or edge cases."
 
-- Read the task requirements and all relevant code
-- Identify every file that needs changes
-- Outline the approach step by step
-- Flag risks, edge cases, or open questions
-- Estimate the scope (number of files, complexity)
+The Explore subagent reads code and produces a plan. It does NOT write any code.
 
 Present the plan to the user for approval. The user may request changes or ask questions before approving.
 
+**Do NOT proceed to Step 3 until the plan is approved.**
+
 #### Step 3: Implement the plan
 
-After the plan is approved, spawn a subagent to implement it. Pass the full approved plan as context. The implementation subagent should:
+**Do NOT write implementation code yourself.** Use the **Task tool** with `subagent_type=general-purpose` to spawn an implementation subagent. Pass it:
+- The full approved plan from Step 2
+- The project's CLAUDE.md content (for conventions and commands)
+- Specific instruction: "Implement this plan. Write all code and tests. On any error, describe the error clearly so it can be diagnosed."
 
-- Follow the plan precisely
-- Read relevant code before making changes
-- On any error, spawn the `debugger` subagent with the error context. Use its analysis to fix the issue.
-- When stuck or going in circles, stop and re-plan before continuing.
-- Keep changes focused on the task. Don't refactor unrelated code.
+The implementation subagent writes all files and returns a summary of what was created/modified.
+
+**After the subagent completes**, verify its work:
+1. Review the changes: run `git diff --stat` to see what was modified
+2. Run the full test suite
+3. Run the linter and type checker
+
+If verification fails:
+- For test failures: spawn the `debugger` agent with the failure output
+- For lint or type errors: spawn a Task subagent with the specific errors to fix
+- Do NOT fix implementation code yourself (except trivial 1-2 line issues)
+
+**Gate**: Do not proceed to Step 4 until all checks pass.
 
 #### Step 4: Verify locally
 
 Run the project's linting, formatting, type checking, and test commands. Check the Commands section of CLAUDE.md or the project's config files for the exact commands. Fix any failures before proceeding.
 
-#### Step 5: Consolidate documentation
+#### Step 5: Audit docs, CI/CD, and deploy script (parallel)
 
-Run the `/docs-consolidator` skill to audit and sync project docs. Skip if the skill is unavailable.
+Run these concurrently — they are independent:
+- `/docs-consolidator` — audit and sync project docs
+- `/ci-cd-pipeline` — ensure GitHub Actions matches current state
+- `/smoke-test` — update deploy.sh with smoke tests for any new functionality
 
-#### Step 6: Audit CI/CD pipeline
+Skip any if the skill is unavailable. Wait for all to complete before proceeding.
 
-Run the `/ci-cd-pipeline` skill to ensure the GitHub Actions pipeline matches the project's current state. Skip if the skill is unavailable.
+#### Step 6: Commit all changes
 
-#### Step 7: Commit all changes
+Stage and commit everything from the task and from Step 5. Write a concise, descriptive commit message. Use conventional commit prefixes when appropriate (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`, `refactor:`, `test:`).
 
-Stage and commit everything from the task and from Steps 5-6. Write a concise, descriptive commit message. Use conventional commit prefixes when appropriate (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`, `refactor:`, `test:`).
-
-#### Step 8: Push to a new branch and open a PR
+#### Step 7: Push to a new branch and open a PR
 
 ```bash
 git checkout -b <type>/<short-slug>
@@ -103,25 +162,26 @@ gh pr create --fill
 
 Use a descriptive branch name: `feat/core-types`, `fix/timestamp-bug`, `chore/update-deps`, etc.
 
-#### Step 9: Code review
+#### Step 8: Code review and CI (parallel)
 
-Spawn the `code-reviewer` subagent to review the PR. If the reviewer identifies issues, fix them on the same branch, commit, and push before proceeding.
+Start both immediately after opening the PR:
 
-#### Step 10: Wait for CI checks to pass
+- **8a**: Spawn the `code-reviewer` subagent to review the PR.
+- **8b**: Run `gh pr checks --watch --fail-fast` to monitor CI.
 
-```bash
-gh pr checks --watch --fail-fast
-```
-
-- **If checks pass:** proceed to Step 11.
-- **If checks fail:**
+Handling results:
+- If review returns Critical or Warning findings:
+  - **3+ line fixes**: Spawn a Task subagent to apply them. Do not fix directly.
+  - **1-2 line fixes**: The orchestrator may apply these directly.
+  - Commit and push fixes. CI restarts automatically on the new push.
+- If CI fails:
   1. Identify the failure: `gh pr checks` then `gh run view <run-id> --log-failed`.
   2. Spawn the `debugger` subagent with the failure context.
   3. Apply the fix on the same branch, commit, and push.
-  4. Repeat from the start of Step 10. Max 3 retries.
-  5. If still failing after 3 retries, stop and ask the user for help.
+  4. Max 3 CI retries. If still failing, stop and ask the user for help.
+- **Proceed to Step 9 when**: review is clean (APPROVE or only Nits) AND CI passes.
 
-#### Step 11: Merge the PR and clean up
+#### Step 9: Merge the PR and clean up
 
 ```bash
 gh pr merge --squash --delete-branch
@@ -131,16 +191,16 @@ git checkout main && git pull origin main
 - **If merge conflict:**
   1. Rebase onto the default branch: `git fetch origin main && git rebase origin/main`.
   2. Force-push safely: `git push --force-with-lease`.
-  3. Wait for CI again (return to Step 10). Max 1 retry.
+  3. Wait for CI again (return to Step 8b). Max 1 retry.
   4. If the conflict persists, stop and ask the user for help.
 
-#### Step 12: Mark task complete
+#### Step 10: Mark task complete
 
 Update the task source:
 - **TASKS.md:** Change `- [ ]` to `- [x]` for the completed task. Commit and push this change directly to main.
 - **GitHub Issues:** Close the issue with `gh issue close <number> --comment "Completed in PR #<pr-number>"`.
 
-#### Step 13: Next task
+#### Step 11: Next task
 
 Return to Step 1 for the next incomplete task.
 
@@ -167,5 +227,6 @@ If any tasks were skipped or need user attention, list them separately.
 - If a task is too vague to implement, ask the user for clarification rather than guessing.
 - If the post-task pipeline requires user input (e.g., CI failure after 3 retries), pause the loop and wait for the user before continuing to the next task.
 - When updating TASKS.md on main, use a minimal commit (e.g., `chore: mark task N complete`) — don't open a PR for tracker updates.
-- Skip Steps 5-6 (docs-consolidator, ci-cd-pipeline) if those skills aren't installed. Don't fail the pipeline over optional steps.
+- Skip Step 5 (docs-consolidator, ci-cd-pipeline) if those skills aren't installed. Don't fail the pipeline over optional steps.
 - Respect the project's CLAUDE.md conventions and commands. Read it before doing anything.
+- **Context conservation**: Your context window must last the entire task list. Never write large blocks of code directly. If you find yourself writing more than ~10 lines of code, STOP and spawn a Task subagent instead.
