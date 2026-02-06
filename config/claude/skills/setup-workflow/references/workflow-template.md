@@ -11,6 +11,8 @@
 
 ### During Development — Orchestrator Pattern
 
+If you were spawned as a Task Runner by an orchestrator (like Ralph), follow the Pipeline section of your prompt instead of this workflow.
+
 **You are the orchestrator.** Your role is to coordinate subagents, verify results, and make decisions. Do NOT write implementation code directly. All code generation of more than ~10 lines goes to a subagent via the Task tool. This preserves your context window for coordination across the full task lifecycle.
 
 **Subagent roster:**
@@ -97,8 +99,8 @@ git checkout main && git pull origin main
   3. Wait for CI again (return to Step 5b). Max 1 retry.
   4. If the conflict persists, stop and ask the user for help.
 
-**Step 7: Clean up the session.**
-Run `/clean` to clear the conversation context. This ensures a fresh start for the next task.
+**Step 7: Conserve context.**
+Keep context lean by delegating implementation to Task subagents rather than writing code directly. If running as a Task Runner, report your result and exit.
 
 ### After Making a Mistake
 
