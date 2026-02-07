@@ -22,7 +22,85 @@ Autonomous task runner. Discovers a project's task list, spawns a Task Runner su
 
 **Autonomy**: Do NOT use `EnterPlanMode`, `AskUserQuestion`, or any other mechanism that pauses for user input. You are the decision-maker. The only time you stop and ask the user is when you've exhausted retries or hit a genuinely ambiguous requirement that can't be resolved from project docs.
 
-**Progress tracking**: Use TaskCreate to register each task (task-level, not pipeline-step-level). Prefix `subject` and `activeForm` with `[TaskRunner]` so the user can see what's running (e.g., `subject: "[TaskRunner] Task 1: add auth"`, `activeForm: "[TaskRunner] Running task 1: add auth"`). Mark `in_progress` when starting, `completed` when done. The user sees live progress via `Ctrl+T`.
+**Progress tracking**: The user sees live progress via `Ctrl+T`. Create milestones **on-demand** (not all up front) with pipeline stage tasks immediately following each milestone — this ensures stages appear directly under their parent in the flat task list. See the **Pipeline Visualization** section below for the full protocol.
+
+## Pipeline Visualization
+
+The `Ctrl+T` task list is a **flat list ordered by creation ID**. To make stages appear directly under their parent milestone, follow this creation-order protocol strictly.
+
+### What the user sees
+
+**Sequential (one milestone at a time):**
+```
+✓  [1/5] Add core types
+⟳  [2/5] Implement engine
+     ✓  → Plan
+     ⟳  → Implement                    "[implementer] Writing code and tests"
+        → Verify
+        → Audit
+        → Commit & PR
+        → Review
+        → CI
+        → Merge
+```
+
+**Parallel (multiple milestones simultaneously):**
+```
+✓  [1/5] Add core types
+⟳  [2/5] Implement engine
+     ✓  → Plan
+     ⟳  → Implement                    "[implementer] Writing code and tests"
+        → Verify
+        → Audit
+        → Commit & PR
+        → Review
+        → CI
+        → Merge
+⟳  [3/5] Add Discord alerts
+     ✓  → Plan
+     ✓  → Implement
+     ⟳  → Verify                       "[debugger] Fixing test failures (retry 1/3)"
+        → Audit
+        → Commit & PR
+        → Review
+        → CI
+        → Merge
+```
+
+### Creation-order protocol
+
+1. **Do NOT create all milestones up front.** Create each milestone on-demand, right before it starts.
+2. **Immediately after creating a milestone**, create its 8 `→ <stage>` tasks — this ensures consecutive IDs and correct display order.
+3. **For parallel batches**: create milestone A + 8 stages, then milestone B + 8 stages, *before* spawning any subagents.
+4. **Pass the 8 stage task IDs** to the subagent in its prompt so it can update them.
+5. **On completion**: delete the 8 stage tasks (set status to `deleted`), then mark the milestone `completed`.
+
+### Pipeline stages
+
+| # | Subject | Agent | activeForm when in_progress |
+|---|---------|-------|-----------------------------|
+| 1 | `→ Plan` | planner | `[planner] Analyzing code and producing plan` |
+| 2 | `→ Implement` | implementer | `[implementer] Writing code and tests` |
+| 3 | `→ Verify` | (self) | `Running lint, typecheck, tests` |
+| 4 | `→ Audit` | (parallel) | `[docs] [ci-cd] [smoke-test] Auditing in parallel` |
+| 5 | `→ Commit & PR` | (self) | `Committing and opening PR` |
+| 6 | `→ Review` | code-reviewer | `[code-reviewer] Reviewing PR` |
+| 7 | `→ CI` | (self) | `Waiting for CI checks` |
+| 8 | `→ Merge` | orchestrator | `Merging PR and cleaning up` |
+
+### Error/retry activeForm patterns
+
+When a retry spawns a specific agent, update the current stage's `activeForm`:
+
+| Scenario | activeForm |
+|----------|------------|
+| Test failure → debugger | `[debugger] Fixing test failures (retry 1/3)` |
+| Lint/type error → implementer | `[implementer] Fixing lint errors (retry 1/3)` |
+| CI failure → debugger | `[debugger] Fixing CI failure (retry 2/3)` |
+| Review findings → implementer | `[implementer] Fixing review findings` |
+| Merge conflict | `Resolving merge conflict (rebase)` |
+
+---
 
 ## Workflow
 
@@ -66,22 +144,39 @@ If the default branch is not `main`, detect it from `git remote show origin` or 
 
 For each incomplete task, in order:
 
-#### Step 1: Spawn a Task Runner
+#### Step 1: Create milestone and stage tasks
 
 ```
 --- Task [N/total]: [task title] ---
 ```
 
-Register the task with TaskCreate, then spawn a Task Runner using the **Task tool** with `subagent_type=general-purpose`. Pass it the Task Runner Prompt (see below), filling in the placeholders.
+1. Create the milestone task with TaskCreate: `subject: "[N/total] <task title>"`, `activeForm: "[N/total] <task title>"`. Capture its ID.
+2. Immediately create 8 stage tasks with TaskCreate (in this exact order, so IDs are consecutive):
+   - `→ Plan` (activeForm: `[planner] Analyzing code and producing plan`)
+   - `→ Implement` (activeForm: `[implementer] Writing code and tests`)
+   - `→ Verify` (activeForm: `Running lint, typecheck, tests`)
+   - `→ Audit` (activeForm: `[docs] [ci-cd] [smoke-test] Auditing in parallel`)
+   - `→ Commit & PR` (activeForm: `Committing and opening PR`)
+   - `→ Review` (activeForm: `[code-reviewer] Reviewing PR`)
+   - `→ CI` (activeForm: `Waiting for CI checks`)
+   - `→ Merge` (activeForm: `Merging PR and cleaning up`)
+3. Capture the 8 stage task IDs.
+4. Mark the milestone task as `in_progress`.
 
-#### Step 2: Collect the result
+#### Step 2: Spawn a Task Runner
+
+Spawn a Task Runner using the **Task tool** with `subagent_type=general-purpose`. Pass it the Task Runner Prompt (see below), filling in the placeholders — including the `[STAGE_TASK_IDS]` placeholder with the 8 stage task IDs from Step 1.
+
+#### Step 3: Collect the result
 
 When the Task Runner returns, parse its result:
-- **READY**: Extract the PR number. Proceed to Step 3.
-- **FAILURE**: Log the reason. Retry once by spawning a new Task Runner. If the retry also fails, log and skip to the next task.
+- **READY**: Extract the PR number. Proceed to Step 4.
+- **FAILURE**: Log the reason. Retry once by spawning a new Task Runner (pass the same stage IDs — reset any completed stages to `pending` first). If the retry also fails, log and skip to the next task.
 - **BLOCKED**: Log the reason. Skip to the next task and retry after other tasks complete.
 
-#### Step 3: Merge the PR
+#### Step 4: Merge the PR
+
+Mark stage 8 (Merge) as `in_progress` with activeForm `Merging PR and cleaning up`.
 
 ```bash
 gh pr merge --squash --delete-branch
@@ -89,18 +184,22 @@ git checkout main && git pull origin main
 ```
 
 If the merge fails due to a conflict (unlikely in sequential mode):
-1. `git fetch origin main && git rebase origin/main`
-2. `git push --force-with-lease`
-3. Wait for CI: `gh pr checks --watch --fail-fast`
-4. Retry the merge. If it still fails, log and skip.
+1. Update Merge stage activeForm: `Resolving merge conflict (rebase)`
+2. `git fetch origin main && git rebase origin/main`
+3. `git push --force-with-lease`
+4. Wait for CI: `gh pr checks --watch --fail-fast`
+5. Retry the merge. If it still fails, log and skip.
 
-#### Step 4: Mark task complete
+Mark stage 8 (Merge) as `completed`.
 
-Update the task source:
-- **TASKS.md:** Change `- [ ]` to `- [x]` for the completed task. Commit and push directly to main with `chore: mark task N complete`.
-- **GitHub Issues:** Close with `gh issue close <number> --comment "Completed in PR #<pr-number>"`.
+#### Step 5: Clean up and mark task complete
 
-Mark the TaskCreate entry as completed. Move to the next task.
+1. Delete all 8 stage tasks (set status to `deleted`) — this removes the pipeline detail from `Ctrl+T`, leaving only the clean milestone entry.
+2. Mark the milestone task as `completed`.
+3. Update the task source:
+   - **TASKS.md:** Change `- [ ]` to `- [x]` for the completed task. Commit and push directly to main with `chore: mark task N complete`.
+   - **GitHub Issues:** Close with `gh issue close <number> --comment "Completed in PR #<pr-number>"`.
+4. Move to the next task.
 
 ### Phase 4b: Parallel execution with worktrees (enhancement)
 
@@ -113,27 +212,39 @@ Before starting the task loop, analyze the task list for independence. Only use 
 
 **Parallel flow:**
 
-1. Group independent tasks into batches
-2. For each batch, create worktrees:
+1. Group independent tasks into batches.
+
+2. **Create all milestones and stages for the batch in order** (critical for display). For each task in the batch, sequentially:
+   - Create the milestone task: `[N/total] <task title>`
+   - Immediately create its 8 `→ <stage>` tasks
+   - Capture the milestone ID and 8 stage IDs
+   - Mark the milestone as `in_progress`
+
+   This ensures each milestone's stages appear directly beneath it in `Ctrl+T`.
+
+3. For each task in the batch, create worktrees:
    ```bash
    git worktree add .worktrees/<task-slug> -b <type>/<task-slug> main
    ```
    Add `.worktrees/` to `.gitignore` if not already present.
 
-3. Spawn Task Runners **in parallel** (multiple Task tool calls in a single message). Each gets its worktree path as the working directory in its prompt.
+4. Spawn Task Runners **in parallel** (multiple Task tool calls in a single message). Each gets its worktree path as the working directory and its own set of stage task IDs in the prompt.
 
-4. Wait for all Task Runners to complete. Collect READY/FAILURE/BLOCKED results.
+5. Wait for all Task Runners to complete. Collect READY/FAILURE/BLOCKED results.
 
-5. **Merge PRs sequentially** (prevention + redo strategy):
-   - Merge first PR: `gh pr merge --squash --delete-branch` → pull main
-   - For each subsequent PR:
+6. **Merge PRs sequentially** (prevention + redo strategy). For each READY task:
+   - Mark its stage 8 (Merge) as `in_progress` with activeForm `Merging PR and cleaning up`
+   - Merge: `gh pr merge --squash --delete-branch` → pull main
+   - For subsequent PRs:
      - **Try merge**: if it merges cleanly, done
-     - **Try rebase**: `git rebase origin/main` — if git auto-resolves, force-push (`--force-with-lease`), wait for CI, merge
-     - **Redo**: if rebase fails (real conflict), `git rebase --abort`, close the PR, spawn a fresh Task Runner on updated main. The new runner re-implements the task from scratch, producing a conflict-free PR. Max 1 redo per task.
+     - **Try rebase**: `git rebase origin/main` — if git auto-resolves, force-push (`--force-with-lease`), wait for CI, merge. Update Merge stage activeForm: `Resolving merge conflict (rebase)`
+     - **Redo**: if rebase fails (real conflict), `git rebase --abort`, close the PR, spawn a fresh Task Runner on updated main. The new runner re-implements the task from scratch. Max 1 redo per task.
+   - Mark stage 8 (Merge) as `completed`
+   - **Clean up**: delete all 8 stage tasks for this milestone, mark milestone `completed`
 
-6. Batch-update TASKS.md for all merged tasks in a single commit.
+7. Batch-update TASKS.md for all merged tasks in a single commit.
 
-7. Clean up:
+8. Clean up worktrees:
    ```bash
    git worktree remove .worktrees/<task-slug>
    git worktree prune
@@ -186,6 +297,39 @@ You may spawn sub-subagents for complex work:
 
 For simple tasks (1-3 files, straightforward change), you MAY skip sub-subagents and implement directly. For complex tasks (multi-file, architectural, new feature), use Planner then Implementer.
 
+## Progress Tracking
+
+The orchestrator has pre-created 8 pipeline stage tasks for you. Update them as you progress through each step so the user can see real-time status via `Ctrl+T`.
+
+**Your stage task IDs (in order):**
+[STAGE_TASK_IDS]
+
+**Stage-to-ID mapping:**
+1. Plan = ID at index 0
+2. Implement = ID at index 1
+3. Verify = ID at index 2
+4. Audit = ID at index 3
+5. Commit & PR = ID at index 4
+6. Review = ID at index 5
+7. CI = ID at index 6
+8. Merge = ID at index 7
+
+**How to update stages:**
+- When starting a stage: `TaskUpdate(taskId=<id>, status="in_progress", activeForm="[agent] description")`
+- When a stage completes: `TaskUpdate(taskId=<id>, status="completed")`
+- On retry/error: update the current stage's `activeForm` with the agent name and retry count (e.g., `[debugger] Fixing test failures (retry 1/3)`)
+- **Never create or delete tasks** — the orchestrator owns the task lifecycle
+
+**Agent attribution in activeForm:**
+- Plan: `[planner] Analyzing code and producing plan`
+- Implement: `[implementer] Writing code and tests`
+- Verify: `Running lint, typecheck, tests` (no agent prefix — you run this directly)
+- Audit: `[docs] [ci-cd] [smoke-test] Auditing in parallel`
+- Commit & PR: `Committing and opening PR`
+- Review: `[code-reviewer] Reviewing PR`
+- CI: `Waiting for CI checks`
+- Merge: `Merging PR and cleaning up`
+
 ## Pipeline
 
 Execute these steps in order. Do not skip steps. Do not ask the user for input — you are autonomous.
@@ -197,11 +341,17 @@ git checkout -b <type>/<short-slug>
 Use a descriptive branch name: `feat/core-types`, `fix/timestamp-bug`, etc.
 
 ### Step 2: Plan the task
+**→ Mark stage 1 (Plan) as `in_progress` with activeForm `[planner] Analyzing code and producing plan`**
+
 Spawn a Planner subagent (Task tool, subagent_type=Explore) with the task description, project file structure, and relevant docs. It reads code and returns an implementation plan.
 
 Review the plan yourself. Check for completeness, gaps, and alignment with the task. If lacking, re-plan with more specific instructions.
 
+**→ Mark stage 1 (Plan) as `completed`**
+
 ### Step 3: Implement the plan
+**→ Mark stage 2 (Implement) as `in_progress` with activeForm `[implementer] Writing code and tests`**
+
 Spawn an Implementer subagent (Task tool, subagent_type=general-purpose) with the approved plan and CLAUDE.md conventions. It writes all code and tests.
 
 After the subagent completes, verify:
@@ -210,14 +360,22 @@ After the subagent completes, verify:
 3. Run the linter and type checker
 
 If verification fails:
-- Test failures: spawn the debugger agent
-- Lint/type errors: spawn a Task subagent with the errors
+- Test failures: spawn the debugger agent. Update activeForm: `[debugger] Fixing test failures (retry 1/3)`
+- Lint/type errors: spawn a Task subagent with the errors. Update activeForm: `[implementer] Fixing lint errors (retry 1/3)`
 Do not proceed until all checks pass.
 
+**→ Mark stage 2 (Implement) as `completed`**
+
 ### Step 4: Verify locally
-Run the project's lint, format, typecheck, and test commands. Fix any failures.
+**→ Mark stage 3 (Verify) as `in_progress` with activeForm `Running lint, typecheck, tests`**
+
+Run the project's lint, format, typecheck, and test commands. Fix any failures. On retry, update activeForm with the retry count and agent if applicable.
+
+**→ Mark stage 3 (Verify) as `completed`**
 
 ### Step 5: Audit docs, CI/CD, and deploy script
+**→ Mark stage 4 (Audit) as `in_progress` with activeForm `[docs] [ci-cd] [smoke-test] Auditing in parallel`**
+
 Spawn these as parallel Task subagents (subagent_type=general-purpose). Each gets the relevant skill instructions and directive: "Execute autonomously. Do not ask the user for approval."
 
 - Docs audit: read `~/.claude/skills/docs-consolidator/SKILL.md` and pass its contents
@@ -226,23 +384,41 @@ Spawn these as parallel Task subagents (subagent_type=general-purpose). Each get
 
 Skip any if the skill is unavailable. Wait for all to complete.
 
-### Step 6: Commit all changes
+**→ Mark stage 4 (Audit) as `completed`**
+
+### Step 6: Commit all changes and open PR
+**→ Mark stage 5 (Commit & PR) as `in_progress` with activeForm `Committing and opening PR`**
+
 Stage and commit everything. Use conventional commit prefixes (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`, `refactor:`, `test:`).
 
-### Step 7: Push and open a PR
 ```bash
 git push -u origin <branch-name>
 gh pr create --fill
 ```
 
-### Step 8: Code review and CI (parallel)
-- Spawn the code-reviewer agent to review the PR
-- Run `gh pr checks --watch --fail-fast` to monitor CI
+**→ Mark stage 5 (Commit & PR) as `completed`**
+
+### Step 7: Code review
+**→ Mark stage 6 (Review) as `in_progress` with activeForm `[code-reviewer] Reviewing PR`**
+
+Spawn the code-reviewer agent to review the PR.
 
 Handling results:
-- Review Critical/Warnings: 3+ line fixes → spawn Task subagent. 1-2 lines → fix directly. Commit and push.
-- CI failure: identify via `gh run view <run-id> --log-failed`, spawn debugger agent, fix, commit, push. Max 3 CI retries.
-- Proceed when: review is clean (APPROVE or Nits only) AND CI passes.
+- Review Critical/Warnings: 3+ line fixes → spawn Task subagent. 1-2 lines → fix directly. Commit and push. Update activeForm: `[implementer] Fixing review findings`
+- Proceed when: review is clean (APPROVE or Nits only).
+
+**→ Mark stage 6 (Review) as `completed`**
+
+### Step 8: CI checks
+**→ Mark stage 7 (CI) as `in_progress` with activeForm `Waiting for CI checks`**
+
+Run `gh pr checks --watch --fail-fast` to monitor CI.
+
+Handling results:
+- CI failure: identify via `gh run view <run-id> --log-failed`, spawn debugger agent, fix, commit, push. Update activeForm: `[debugger] Fixing CI failure (retry 1/3)`. Max 3 CI retries.
+- Proceed when CI passes.
+
+**→ Mark stage 7 (CI) as `completed`**
 
 ## Result
 
