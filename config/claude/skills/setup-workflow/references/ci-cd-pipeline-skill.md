@@ -65,7 +65,7 @@ Present findings to the user:
 - [action]: correctly configured
 ```
 
-Wait for user approval before making changes.
+If running interactively, wait for user approval before making changes. If running autonomously (e.g., as a post-task audit subagent), proceed directly to Phase 4 — apply all additions and updates from the audit.
 
 ### Phase 4: Execute changes
 
