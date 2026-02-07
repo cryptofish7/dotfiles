@@ -220,9 +220,9 @@ Run the project's lint, format, typecheck, and test commands. Fix any failures.
 ### Step 5: Audit docs, CI/CD, and deploy script
 Spawn these as parallel Task subagents (subagent_type=general-purpose). Each gets the relevant skill instructions and directive: "Execute autonomously. Do not ask the user for approval."
 
-- Docs audit: pass docs-consolidator skill instructions
-- CI/CD audit: pass ci-cd-pipeline skill instructions
-- Smoke test update: pass smoke-test skill instructions
+- Docs audit: read `~/.claude/skills/docs-consolidator/SKILL.md` and pass its contents
+- CI/CD audit: read `~/.claude/skills/ci-cd-pipeline/SKILL.md` and pass its contents
+- Smoke test update: read `~/.claude/skills/smoke-test/SKILL.md` and pass its contents
 
 Skip any if the skill is unavailable. Wait for all to complete.
 

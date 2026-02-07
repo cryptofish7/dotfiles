@@ -5,11 +5,11 @@ description: Set up the autonomous post-task workflow for a project. Injects the
 
 # Setup Workflow
 
-Install the autonomous post-task development pipeline into a project's CLAUDE.md. This skill is self-contained — it bundles all required dependencies and will install any that are missing.
+Install the autonomous post-task development pipeline into a project's CLAUDE.md. All dependency skills and agents must be installed before running this skill.
 
 ## Dependencies
 
-This workflow requires 5 tools. The skill bundles copies in `references/` and uses a live-first sync strategy:
+This workflow requires 5 tools:
 
 | Dependency | Type | Live path |
 |-----------|------|-----------|
@@ -21,19 +21,24 @@ This workflow requires 5 tools. The skill bundles copies in `references/` and us
 
 ## Workflow
 
-### Phase 1: Sync and check dependencies
+### Phase 1: Check dependencies
 
-For each dependency in the table above, apply the live-first sync strategy:
+For each dependency in the table above, check if the live file exists:
 
-1. **Check if the live file exists.**
-2. **If it exists:** Read the live file and compare it to the bundled reference in this skill's `references/` directory. If they differ, update the bundled reference to match the live file (keeps references current).
-3. **If it does NOT exist:** Copy the bundled reference from `references/` to the live path. Create any intermediate directories as needed.
+1. **Skills:** Check that `SKILL.md` exists at the live path.
+2. **Agents:** Check that the agent `.md` file exists at the live path.
+3. **ci-cd-pipeline references:** Also check these additional files:
+   - `~/.claude/skills/ci-cd-pipeline/references/actions-catalog.md`
+   - `~/.claude/skills/ci-cd-pipeline/references/deploy-prerequisites.md`
 
-Also handle the ci-cd-pipeline's `actions-catalog.md` reference:
-- Live path: `~/.claude/skills/ci-cd-pipeline/references/actions-catalog.md`
-- Bundled: `references/ci-cd-actions-catalog.md`
+If all dependencies are present, proceed to Phase 2.
 
-After syncing, report what was found and what was installed.
+If any are missing, report which ones and stop:
+```
+Missing dependencies:
+- [dependency name]: expected at [path]
+Install the missing skills/agents before running setup-workflow.
+```
 
 ### Phase 2: Detect CLAUDE.md
 
@@ -95,4 +100,4 @@ This file provides context for Claude Code sessions working on this project.
 - Never modify any section of CLAUDE.md outside the Workflow section (unless creating a new file)
 - The workflow template in `references/workflow-template.md` is the single source of truth
 - If auto-detecting commands for a new CLAUDE.md, prefer reading the project's config files over guessing
-- When syncing dependencies, create parent directories (`mkdir -p`) as needed
+- If a dependency is missing, tell the user to install it rather than attempting to create it

@@ -109,15 +109,17 @@ Use `docker/build-push-action@v5`. Build on push to main, push to registry only 
 
 ### Platform Detection
 
-| Signal | Platform | Action |
-|--------|----------|--------|
-| `railway.json` or `railway.toml` | Railway | Add Railway deploy job via `railwayapp/deploy-action` |
-| `fly.toml` | Fly.io | Add Fly deploy job via `superfly/flyctl-actions` |
-| `vercel.json` or `"vercel"` in deps | Vercel | Add Vercel deploy (usually auto, skip unless manual config needed) |
-| `*.tf` files | Terraform | Add `terraform plan` on PR, `terraform apply` on merge |
-| `k8s/` or `kubernetes/` manifests | Kubernetes | Add kubectl apply job |
-| `appspec.yml` | AWS CodeDeploy | Add CodeDeploy job |
-| `serverless.yml` | Serverless Framework | Add `serverless deploy` job |
+| Signal | Platform | Action | Required secrets |
+|--------|----------|--------|-----------------|
+| `railway.json` or `railway.toml` | Railway | Add Railway deploy job via `railwayapp/deploy-action` | `RAILWAY_TOKEN` |
+| `fly.toml` | Fly.io | Add Fly deploy job via `superfly/flyctl-actions` | `FLY_API_TOKEN` |
+| `vercel.json` or `"vercel"` in deps | Vercel | Add Vercel deploy (usually auto, skip unless manual config needed) | `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` |
+| `*.tf` files | Terraform | Add `terraform plan` on PR, `terraform apply` on merge | Provider-specific (e.g., `AWS_ACCESS_KEY_ID`) |
+| `k8s/` or `kubernetes/` manifests | Kubernetes | Add kubectl apply job | `KUBECONFIG` |
+| `appspec.yml` | AWS CodeDeploy | Add CodeDeploy job | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` |
+| `serverless.yml` | Serverless Framework | Add `serverless deploy` job | Provider-specific credentials |
+
+**Prerequisites**: Each platform requires manual setup before the deploy workflow will function. See `deploy-prerequisites.md` for step-by-step setup guides.
 
 **Deploy triggers**: Only on push to main (or tag for releases). Never on PRs.
 

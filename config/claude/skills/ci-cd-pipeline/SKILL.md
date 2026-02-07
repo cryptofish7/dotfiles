@@ -32,7 +32,7 @@ Key files to check:
 
 ### Phase 2: Audit current pipeline
 
-Read `references/actions-catalog.md` for the full catalog of actions with add/remove criteria.
+Read `~/.claude/skills/ci-cd-pipeline/references/actions-catalog.md` for the full catalog of actions with add/remove criteria.
 
 For each action in the catalog:
 
@@ -55,6 +55,15 @@ Present findings to the user:
 ### Actions to Add
 - [ ] [action]: [rationale based on detected signal]
 
+### Manual Setup Required
+> Only include this section when adding a deploy action.
+
+[Platform name]:
+1. [step from deploy-prerequisites.md]
+2. [step from deploy-prerequisites.md]
+3. Add `SECRET_NAME` to GitHub repo secrets (Settings → Secrets and variables → Actions)
+4. [verification step]
+
 ### Actions to Remove
 - [ ] [action]: [rationale — signal no longer present]
 
@@ -64,6 +73,8 @@ Present findings to the user:
 ### No Changes Needed
 - [action]: correctly configured
 ```
+
+When adding a deploy action, read `~/.claude/skills/ci-cd-pipeline/references/deploy-prerequisites.md` for the detected platform and include its setup steps in the **Manual Setup Required** section. This ensures the user knows what manual steps are needed before the workflow will function.
 
 If running interactively, wait for user approval before making changes. If running autonomously (e.g., as a post-task audit subagent), proceed directly to Phase 4 — apply all additions and updates from the audit.
 
