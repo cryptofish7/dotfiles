@@ -5,5 +5,27 @@
   },
   "enabledPlugins": {
     "example-skills@anthropic-agent-skills": true
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "effortLevel": "medium",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/optimization-hint.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/word-count-check.sh"
+          }
+        ]
+      }
+    ]
   }
 }
