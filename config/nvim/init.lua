@@ -428,18 +428,7 @@ require('telescope').setup {
     pickers = {
         find_files = {
             hidden = true,
-            no_ignore = true,
-            file_ignore_patterns = {
-                'node_modules',
-                '.git/',
-                '.venv',
-                'dist',
-                'build',
-                '.next',
-                'coverage',
-                '__pycache__',
-                '%.lock$',
-            },
+            file_ignore_patterns = { '.git/' },
         },
     },
 }
