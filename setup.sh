@@ -19,6 +19,9 @@ ln -sf "$DOTFILES/config/karabiner" "$HOME/.config/karabiner"
 # Claude Code
 mkdir -p "$HOME/.claude"
 ln -sf "$DOTFILES/config/claude/settings.json" "$HOME/.claude/settings.json"
+# Remove real dirs so ln -sfn can create symlinks
+[ -d "$HOME/.claude/skills" ] && [ ! -L "$HOME/.claude/skills" ] && rm -rf "$HOME/.claude/skills"
+[ -d "$HOME/.claude/agents" ] && [ ! -L "$HOME/.claude/agents" ] && rm -rf "$HOME/.claude/agents"
 ln -sfn "$DOTFILES/config/claude/skills" "$HOME/.claude/skills"
 ln -sfn "$DOTFILES/config/claude/agents" "$HOME/.claude/agents"
 
