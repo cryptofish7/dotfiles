@@ -9,12 +9,12 @@ ln -sf "$DOTFILES/zsh/.zshrc" "$HOME/.zshrc"
 
 # XDG configs (~/.config/)
 mkdir -p "$HOME/.config"
-ln -sf "$DOTFILES/config/nvim" "$HOME/.config/nvim"
-ln -sf "$DOTFILES/config/tmux" "$HOME/.config/tmux"
-ln -sf "$DOTFILES/config/ghostty" "$HOME/.config/ghostty"
-ln -sf "$DOTFILES/config/gh" "$HOME/.config/gh"
-ln -sf "$DOTFILES/config/git" "$HOME/.config/git"
-ln -sf "$DOTFILES/config/karabiner" "$HOME/.config/karabiner"
+ln -sfn "$DOTFILES/config/nvim" "$HOME/.config/nvim"
+ln -sfn "$DOTFILES/config/tmux" "$HOME/.config/tmux"
+ln -sfn "$DOTFILES/config/ghostty" "$HOME/.config/ghostty"
+ln -sfn "$DOTFILES/config/gh" "$HOME/.config/gh"
+ln -sfn "$DOTFILES/config/git" "$HOME/.config/git"
+ln -sfn "$DOTFILES/config/karabiner" "$HOME/.config/karabiner"
 
 # Claude Code
 mkdir -p "$HOME/.claude"
