@@ -7,7 +7,7 @@ alias get='curl -OL'
 alias python='python3'
 alias pip='pip3'
 alias vim='nvim'
-alias cc='claude --dangerously-skip-permissions --chrome --worktree'
+alias cc='claude --dangerously-skip-permissions --chrome'
 
 # ------------------------------
 # Homebrew (Apple Silicon)
@@ -21,7 +21,7 @@ autoload -Uz vcs_info
 zstyle ':vcs_info:git:*' formats ' (%b)'
 precmd() {
   vcs_info
-  print -Pn "\e]0;%~\a"  # Set terminal title
+  print -Pn "\e]0;%~\a" # Set terminal title
 }
 
 setopt PROMPT_SUBST
