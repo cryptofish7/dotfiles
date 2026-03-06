@@ -38,3 +38,11 @@ export PATH="$HOME/.local/bin:$PATH"
 # FZF (use ripgrep for file listing)
 # ------------------------------
 export FZF_DEFAULT_COMMAND='rg --files --no-ignore-vcs --hidden'
+
+# pnpm
+export PNPM_HOME="/Users/cryptofish/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
