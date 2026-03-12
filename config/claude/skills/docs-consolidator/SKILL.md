@@ -1,6 +1,6 @@
 ---
 name: docs-consolidator
-description: Audit and consolidate project documentation in the docs/ folder. Use when the user wants to clean up docs, check docs are up to date, deduplicate information across docs, ensure information lives in the right doc, or reorganize documentation. Triggers on requests like "consolidate docs", "clean up documentation", "audit docs", "organize docs", "sync docs with code".
+description: Audit and consolidate project documentation in the docs/ folder, including CLAUDE.md optimization. Use when the user wants to clean up docs, check docs are up to date, deduplicate information across docs, ensure information lives in the right doc, reorganize documentation, or slim down CLAUDE.md files. Triggers on "consolidate docs", "clean up documentation", "audit docs", "organize docs", "sync docs with code", "audit claudemd", "review claude.md", "slim down claude.md", "optimize claude.md", "claudemd audit".
 ---
 
 # Docs Consolidator
@@ -57,6 +57,14 @@ Read every doc (if not already read in Phase 1) and compare against the registry
 - **Poor organization**: docs where sections are out of logical order, or where related information is scattered across unrelated sections.
 - **Undocumented feature**: Examine the current branch name, recent commits, and changed files to determine if a significant new feature was implemented. Check each doc in the registry to see if it needs updating for this feature. For example: does the tasks/progress doc need a new milestone? Does the architecture doc need new components or APIs? Does a security doc need new threat analysis? Flag each doc that needs additions.
 
+#### CLAUDE.md deep audit
+
+Additionally, collect all CLAUDE.md files (root, `packages/*/CLAUDE.md`, `~/.claude/CLAUDE.md`, `~/.claude/projects/<project-path>/CLAUDE.md`) and audit them for:
+
+- **Redundancy**: instructions that say the same thing in different words within one file, rules restated across multiple CLAUDE.md files, content that duplicates referenced docs, sections that restate framework/tool defaults Claude already knows.
+- **Verbosity**: wordy phrasing that can be compressed without losing meaning. Apply the "would a senior engineer need this spelled out?" test. Flag overlong examples, unnecessary caveats, and multi-sentence rules that could be one sentence.
+- **Memory candidates**: stable, rarely-changing content that doesn't need to be in the repo — personal preferences, environment-specific paths/URLs, user-specific tool configs, local port assignments. These belong in project memory (`~/.claude/projects/<path>/CLAUDE.md`), not the repo.
+
 ### Phase 3: Present the plan
 
 Present findings as a structured report to the user:
@@ -75,6 +83,14 @@ Present findings as a structured report to the user:
 
 ### Organization Issues
 - [ ] [doc]: [what to reorder/restructure]
+
+### CLAUDE.md Optimization
+#### Redundancy
+- [ ] [file] lines X-Y: [description] — duplicates [other location]
+#### Verbosity
+- [ ] [file] lines X-Y: [current text snippet] → [compressed version]
+#### Memory Candidates
+- [ ] [file] lines X-Y: [content] — stable/personal, move to project memory
 ```
 
 Ask the user to approve the plan before making any changes.
@@ -97,6 +113,10 @@ After approval, apply changes doc by doc:
    - CLAUDE.md: add key hooks, architectural notes, or gotchas (keep lean).
    - Only update docs where the feature introduces something new for that doc's domain. Don't force updates.
    - All existing guidelines apply: prefer cross-references over duplication, keep CLAUDE.md lean, preserve writing style, one source of truth per topic.
+7. Apply approved CLAUDE.md optimizations:
+   - Compress approved verbose sections in-place
+   - Remove approved redundant content
+   - Move approved memory candidates to `~/.claude/projects/<path>/CLAUDE.md` (create the file if needed, append to existing)
 
 ### Phase 5: Verify
 
@@ -114,3 +134,7 @@ After approval, apply changes doc by doc:
 - When uncertain whether content is stale, flag it for the user rather than deleting.
 - If an `archive/` directory exists, move superseded docs there rather than deleting.
 - Keep CLAUDE.md lean: orientation, commands, conventions, gotchas. Everything else belongs in a specific doc.
+- For CLAUDE.md verbosity fixes, show before/after so the user can judge.
+- Conservative memory moves: only suggest moving content that is truly stable and personal/environment-specific. Repo-essential content stays in the repo.
+- Don't touch intentionally detailed sections (war stories, "mistakes to avoid") — flag them only if genuinely redundant.
+- No false positives: if a CLAUDE.md file is already lean, say so.
