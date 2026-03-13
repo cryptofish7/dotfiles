@@ -14,7 +14,7 @@ Read the files/functions specified. Before touching anything, understand:
 - What the code does and why
 - Who calls it and what depends on it (`Grep` for usages)
 - What tests cover it
-- Project conventions (linter configs, CLAUDE.md, formatting rules)
+- Project conventions (linter configs, AGENTS.md / CLAUDE.md, formatting rules)
 
 ## 2. Analyze
 

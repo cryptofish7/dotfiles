@@ -27,11 +27,11 @@ Classify each finding into one of five categories based on where it should be pe
 
 | Category | Destination |
 |---|---|
-| Mistakes to avoid | `CLAUDE.md` "Mistakes to Avoid" section (append) |
+| Mistakes to avoid | `AGENTS.md` "Mistakes to Avoid" section (append), falling back to `CLAUDE.md` if needed |
 | Skill opportunities | `~/.codex/skills/<name>/SKILL.md` (create stub) |
 | Skill improvements | Edit existing skill's `SKILL.md` |
 | Memory candidates | `~/.codex/memories/<project-slug>.md` (append) |
-| Process improvements | Edit `CLAUDE.md` workflow sections |
+| Process improvements | Edit `AGENTS.md` workflow sections, falling back to `CLAUDE.md` if needed |
 
 For each finding, draft the exact content that would be written (the rule text, the stub, the edit, etc.).
 
@@ -69,11 +69,11 @@ Ask the user which findings to apply. Present each finding as a numbered option 
 
 Then execute only the approved actions:
 
-- **Mistakes to avoid:** Append to the "Mistakes to Avoid" section of the project's `CLAUDE.md`.
+- **Mistakes to avoid:** Append to the "Mistakes to Avoid" section of the project's `AGENTS.md`, or `CLAUDE.md` if the project has not migrated yet.
 - **Skill opportunities:** Create a minimal stub at `~/.codex/skills/<name>/SKILL.md` with frontmatter (name, description) and a `# TODO` section describing the skill's purpose. User can flesh it out later with skill-creator.
 - **Skill improvements:** Show the diff before editing. Edit the existing skill's `SKILL.md`.
 - **Memory candidates:** Append to `~/.codex/memories/<project-slug>.md`. Create the file if it doesn't exist.
-- **Process improvements:** Show the before/after for the affected CLAUDE.md section. Edit in place.
+- **Process improvements:** Show the before/after for the affected AGENTS.md section. If the project still uses CLAUDE.md, edit that instead.
 
 ## Guidelines
 
@@ -81,6 +81,6 @@ Then execute only the approved actions:
 - **Rules must be specific and actionable.** "Be careful with deployments" is noise. "Always verify on-chain bytecode after contract deployment — Foundry logs success during simulation before broadcast" is useful.
 - **Check for duplicates.** Read the existing "Mistakes to Avoid" section and project memory before proposing additions. Don't add what's already there.
 - **Skill opportunities require evidence.** Either 2+ occurrences of the same workflow in the session, or explicit user frustration with a repeated manual process.
-- **Memory candidates must be non-obvious.** Don't propose things already captured in project docs, config files, or CLAUDE.md.
+- **Memory candidates must be non-obvious.** Don't propose things already captured in project docs, config files, or AGENTS.md / CLAUDE.md.
 - **Don't self-reference.** This skill should never propose adding itself as a finding.
-- **Respect scope.** Project-specific knowledge goes to project memory. Universal lessons go to CLAUDE.md. Don't mix them.
+- **Respect scope.** Project-specific knowledge goes to project memory. Universal lessons go to AGENTS.md (or CLAUDE.md on unmigrated projects). Don't mix them.

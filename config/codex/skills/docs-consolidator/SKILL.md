@@ -1,6 +1,6 @@
 ---
 name: docs-consolidator
-description: Audit and consolidate project documentation in the docs/ folder, including CLAUDE.md optimization. Use when the user wants to clean up docs, check docs are up to date, deduplicate information across docs, ensure information lives in the right doc, reorganize documentation, or slim down CLAUDE.md files. Triggers on "consolidate docs", "clean up documentation", "audit docs", "organize docs", "sync docs with code", "audit claudemd", "review claude.md", "slim down claude.md", "optimize claude.md", "claudemd audit".
+description: Audit and consolidate project documentation in the docs/ folder, including AGENTS.md optimization and CLAUDE.md migration. Use when the user wants to clean up docs, check docs are up to date, deduplicate information across docs, ensure information lives in the right doc, reorganize documentation, or slim down AGENTS.md / CLAUDE.md files. Triggers on "consolidate docs", "clean up documentation", "audit docs", "organize docs", "sync docs with code", "audit agents.md", "review agents.md", "audit claude.md", "review claude.md", "slim down agents.md", "optimize agents.md", "slim down claude.md", "optimize claude.md".
 ---
 
 # Docs Consolidator
@@ -14,13 +14,13 @@ Audit, deduplicate, and reorganize project documentation so every piece of infor
 1. Check if `.codex/doc-registry.md` exists in the project root.
    - **If it exists:** read it and use it as the authoritative registry. Skip to step 4.
    - **If it doesn't exist:** continue to step 2 to discover and generate one.
-2. Find all documentation files: scan `docs/`, root `CLAUDE.md` (or `docs/CLAUDE.md` if symlinked), `README.md`, and any other `.md` files referenced by CLAUDE.md.
+2. Find all documentation files: scan `docs/`, root `AGENTS.md` (or `docs/AGENTS.md` if symlinked), root `CLAUDE.md` if present for migration, `README.md`, and any other `.md` files referenced by the agent instruction file.
 3. For each doc, read it and note:
    - What information it currently contains (section-level summary)
    - Its apparent purpose (infer from filename, headers, and content)
    - Its line count
 4. If no registry existed, build one: assign each doc a purpose and ownership domain. Use these common categories as a guide:
-   - **CLAUDE.md** — Orientation for Codex sessions: conventions, gotchas, pointers. NOT a wiki.
+   - **AGENTS.md** — Orientation for Codex sessions: conventions, gotchas, pointers. NOT a wiki.
    - **PRD / product doc** — Product logic, user stories, feature specs, business rules
    - **Architecture doc** — System design, data flow, database schema, API endpoints
    - **Tasks / progress doc** — Current tasks, completed work, backlog
@@ -50,18 +50,18 @@ Present the generated registry to the user and ask for approval before continuin
 
 Read every doc (if not already read in Phase 1) and compare against the registry. Flag:
 
-- **Misplaced information**: content that belongs in a different doc per ownership rules (e.g., architecture details in CLAUDE.md, progress updates in an architecture doc)
+- **Misplaced information**: content that belongs in a different doc per ownership rules (e.g., architecture details in AGENTS.md, progress updates in an architecture doc)
 - **Duplication**: the same information restated in multiple docs. Identify the canonical home and where the duplicates are.
 - **Stale content**: references to removed code, outdated addresses, old instructions, TODOs that are done, etc. Cross-check against actual code when uncertain.
 - **Missing information**: important topics not documented anywhere, or docs that reference sections that don't exist.
 - **Poor organization**: docs where sections are out of logical order, or where related information is scattered across unrelated sections.
 - **Undocumented feature**: Examine the current branch name, recent commits, and changed files to determine if a significant new feature was implemented. Check each doc in the registry to see if it needs updating for this feature. For example: does the tasks/progress doc need a new milestone? Does the architecture doc need new components or APIs? Does a security doc need new threat analysis? Flag each doc that needs additions.
 
-#### CLAUDE.md deep audit
+#### AGENTS.md deep audit
 
-Additionally, collect all CLAUDE.md files (root, `packages/*/CLAUDE.md`, and `~/.codex/CLAUDE.md` if it exists) and audit them for:
+Additionally, collect all AGENTS.md files (root, `docs/AGENTS.md`, `packages/*/AGENTS.md`) and any leftover CLAUDE.md files still used for migration, then audit them for:
 
-- **Redundancy**: instructions that say the same thing in different words within one file, rules restated across multiple CLAUDE.md files, content that duplicates referenced docs, sections that restate framework/tool defaults Codex already knows.
+- **Redundancy**: instructions that say the same thing in different words within one file, rules restated across multiple instruction files, content that duplicates referenced docs, sections that restate framework/tool defaults Codex already knows.
 - **Verbosity**: wordy phrasing that can be compressed without losing meaning. Apply the "would a senior engineer need this spelled out?" test. Flag overlong examples, unnecessary caveats, and multi-sentence rules that could be one sentence.
 - **Memory candidates**: stable, rarely-changing content that doesn't need to be in the repo — personal preferences, environment-specific paths/URLs, user-specific tool configs, local port assignments. These belong in Codex local memory notes (for example `~/.codex/memories/<project-slug>.md`), not the repo.
 
@@ -84,7 +84,7 @@ Present findings as a structured report to the user:
 ### Organization Issues
 - [ ] [doc]: [what to reorder/restructure]
 
-### CLAUDE.md Optimization
+### AGENTS.md Optimization
 #### Redundancy
 - [ ] [file] lines X-Y: [description] — duplicates [other location]
 #### Verbosity
@@ -110,10 +110,10 @@ After approval, apply changes doc by doc:
    - Architecture docs: add new components, endpoints, schemas, or data flows.
    - Product/PRD docs: add new feature specs or user flows.
    - Security docs: add new trust assumptions or threat analysis.
-   - CLAUDE.md: add key hooks, architectural notes, or gotchas (keep lean).
+   - AGENTS.md: add key hooks, architectural notes, or gotchas (keep lean).
    - Only update docs where the feature introduces something new for that doc's domain. Don't force updates.
-   - All existing guidelines apply: prefer cross-references over duplication, keep CLAUDE.md lean, preserve writing style, one source of truth per topic.
-7. Apply approved CLAUDE.md optimizations:
+   - All existing guidelines apply: prefer cross-references over duplication, keep AGENTS.md lean, preserve writing style, one source of truth per topic.
+7. Apply approved AGENTS.md optimizations:
    - Compress approved verbose sections in-place
    - Remove approved redundant content
    - Move approved memory candidates to `~/.codex/memories/<project-slug>.md` (create the file if needed, append to existing)
@@ -122,7 +122,7 @@ After approval, apply changes doc by doc:
 
 1. Check that every doc has the content it should own and nothing else
 2. Grep for broken cross-references (doc paths, section links)
-3. If CLAUDE.md has a "Reference Documents" section, confirm it matches the actual docs
+3. If AGENTS.md has a "Reference Documents" section, confirm it matches the actual docs
 4. For any new feature detected, confirm each flagged doc was updated and new content is in the correct section per the registry.
 5. Present a brief summary of all changes made
 
@@ -133,8 +133,8 @@ After approval, apply changes doc by doc:
 - Preserve the user's writing style and voice. Clean up structure, not prose.
 - When uncertain whether content is stale, flag it for the user rather than deleting.
 - If an `archive/` directory exists, move superseded docs there rather than deleting.
-- Keep CLAUDE.md lean: orientation, commands, conventions, gotchas. Everything else belongs in a specific doc.
-- For CLAUDE.md verbosity fixes, show before/after so the user can judge.
+- Keep AGENTS.md lean: orientation, commands, conventions, gotchas. Everything else belongs in a specific doc.
+- For instruction-file verbosity fixes, show before/after so the user can judge.
 - Conservative memory moves: only suggest moving content that is truly stable and personal/environment-specific. Repo-essential content stays in the repo.
 - Don't touch intentionally detailed sections (war stories, "mistakes to avoid") — flag them only if genuinely redundant.
-- No false positives: if a CLAUDE.md file is already lean, say so.
+- No false positives: if an instruction file is already lean, say so.

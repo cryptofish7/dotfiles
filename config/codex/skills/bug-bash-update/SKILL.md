@@ -98,7 +98,7 @@ This phase applies **only to `fix:` commits** that changed items from `[!]` to `
 
 These rules apply to ALL bug bash verification — both Phase 4 fix verification and general checklist testing.
 
-1. **DO: Test in the browser** — ALL verification must happen via Claude in Chrome MCP tools (navigate, click, screenshot, read page). DO NOT use unit tests, `cast`, `forge test`, contract calls, or code review as verification. If the browser extension is not connected, stop and tell the user.
+1. **DO: Test in the browser** — ALL verification must happen via browser automation or browser-control tools (navigate, click, screenshot, read page). DO NOT use unit tests, `cast`, `forge test`, contract calls, or code review as verification. If browser automation is unavailable, stop and tell the user.
 
 2. **DO: Test on a deployed build** — Read the deployment URL from `docs/BUG_BASH_GUIDE.md`. NEVER use `localhost`. Bug bash tests deployed code, not local dev servers.
 

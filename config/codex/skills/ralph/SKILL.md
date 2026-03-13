@@ -92,9 +92,9 @@ Proceed with the task list in order. If the ordering seems wrong (e.g., a task d
 
 Build working context before starting any development:
 
-1. Read `CLAUDE.md` (check project root and `docs/CLAUDE.md`) for commands, conventions, and workflow rules. **Capture the full CLAUDE.md content** — you'll pass it to each Task Runner.
+1. Read `AGENTS.md` (check project root and `docs/AGENTS.md`) for commands, conventions, and workflow rules. If `AGENTS.md` does not exist, fall back to `CLAUDE.md` / `docs/CLAUDE.md`. **Capture the full instruction-file content** — you'll pass it to each Task Runner.
 2. Read referenced project docs (PRD, architecture, README) if they exist
-3. Note the project's verify commands (lint, format, typecheck, test) from CLAUDE.md, `pyproject.toml`, `package.json`, `Makefile`, or similar
+3. Note the project's verify commands (lint, format, typecheck, test) from AGENTS.md / CLAUDE.md, `pyproject.toml`, `package.json`, `Makefile`, or similar
 
 ### Phase 3: Start clean
 
@@ -160,7 +160,7 @@ Mark stage 8 (Merge) as `completed`.
 
 #### Step 5: Clean up and mark task complete
 
-1. Delete all 8 stage tasks (set status to `deleted`) — this removes the pipeline detail from `Ctrl+T`, leaving only the clean milestone entry.
+1. Delete all 8 stage tasks (set status to `deleted`) — this removes the pipeline detail from the task UI, leaving only the clean milestone entry.
 2. Mark the milestone task as `completed`.
 3. Update the task source:
    - **TASKS.md:** Change `- [ ]` to `- [x]` for the completed task. Commit and push directly to main with `chore: mark task N complete`.
@@ -186,7 +186,7 @@ Before starting the task loop, analyze the task list for independence. Only use 
    - Capture the milestone ID and 8 stage IDs
    - Mark the milestone as `in_progress`
 
-   This ensures each milestone's stages appear directly beneath it in `Ctrl+T`.
+   This ensures each milestone's stages appear directly beneath it in the task UI.
 
 3. For each task in the batch, create worktrees:
    ```bash
@@ -245,7 +245,7 @@ You are a Task Runner. Execute the full development pipeline for a single task.
 [task description from the task list]
 
 ## Project Context
-[CLAUDE.md content, verbatim]
+[AGENTS.md or CLAUDE.md content, verbatim]
 
 ## Working Directory
 [project root path, or worktree path if parallel]
@@ -293,7 +293,7 @@ Review the plan yourself. Check for completeness, gaps, and alignment with the t
 ### Step 3: Implement the plan
 **→ Mark stage 2 (Implement) as `in_progress` with activeForm `[implementer] Writing code and tests`**
 
-Delegate implementation if the runtime supports it. Otherwise implement directly while following the approved plan and CLAUDE.md conventions.
+Delegate implementation if the runtime supports it. Otherwise implement directly while following the approved plan and AGENTS.md / CLAUDE.md conventions.
 
 After the subagent completes, verify:
 1. `git diff --stat` to review what changed
@@ -387,5 +387,5 @@ BLOCKED: <reason>.
 - If a task is too vague to implement, ask the user for clarification rather than guessing.
 - When updating TASKS.md on main, use a minimal commit — don't open a PR for tracker updates.
 - Skip audit subagents (docs-consolidator, ci-cd-pipeline, smoke-test) if those skills aren't installed. Don't fail the pipeline over optional steps.
-- Respect the project's CLAUDE.md conventions and commands. Read it before doing anything.
+- Respect the project's AGENTS.md conventions and commands. If the project has not migrated, use CLAUDE.md instead.
 - **Context conservation**: Ralph stays lean by delegating each task to a fresh worker when possible. Keep your own messages short — task description, result parsing, merge commands, tracker updates.

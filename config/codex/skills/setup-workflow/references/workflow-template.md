@@ -28,8 +28,8 @@ If you were spawned as a Task Runner by an orchestrator (like Ralph), follow the
 
 1. **Plan**: Delegate planning if the runtime supports it. Otherwise, analyze the task directly and produce a concrete implementation plan. Review the plan yourself — check for completeness, gaps, and alignment with the task. If it's lacking, re-plan with more specific instructions. Do not ask the user to approve the plan.
 2. **Branch**: Create a feature branch from main: `git checkout -b <type>/<short-slug>` (e.g., `feat/core-types`, `fix/timestamp-bug`). All implementation happens on this branch.
-3. **Implement**: Once the plan looks solid, delegate implementation if supported; otherwise implement directly while following the plan and CLAUDE.md conventions.
-4. **Verify**: After the subagent completes, run the full verify suite (lint, format, typecheck, test). If verification fails, spawn the `debugger` agent for test failures or a Task subagent for lint/type errors.
+3. **Implement**: Once the plan looks solid, delegate implementation if supported; otherwise implement directly while following the plan and AGENTS.md conventions.
+4. **Verify**: After delegated implementation completes, run the full verify suite (lint, format, typecheck, test). If verification fails, spawn the `debugger` agent for test failures or delegate another implementation pass for lint/type errors.
 5. When stuck or going in circles, stop. Re-plan before continuing.
 
 **When the orchestrator acts directly** (exceptions):
@@ -73,17 +73,17 @@ Stage and commit everything from the task and from Step 2. Write a concise, desc
 **Step 5: Code review and CI (parallel).**
 Start both immediately after opening the PR:
 
-- **5a**: Spawn the `code-reviewer` subagent to review the PR.
+- **5a**: Spawn the `code-reviewer` agent to review the PR.
 - **5b**: Run `gh pr checks --watch --fail-fast` to monitor CI.
 
 Handling results:
 - If review returns Critical or Warning findings:
-  - **3+ line fixes**: Spawn a Task subagent to apply them. Do not fix directly.
+  - **3+ line fixes**: Delegate another worker to apply them. Do not fix directly.
   - **1-2 line fixes**: The orchestrator may apply these directly.
   - Commit and push fixes. CI restarts automatically on the new push.
 - If CI fails:
   1. Identify the failure: `gh pr checks` then `gh run view <run-id> --log-failed`.
-  2. Spawn the `debugger` subagent with the failure context.
+  2. Spawn the `debugger` agent with the failure context.
   3. Apply the fix on the same branch, commit, and push.
   4. Max 3 CI retries. If still failing, stop and ask the user for help.
 - **Proceed to Step 6 when**: review is clean (APPROVE or only Nits) AND CI passes.

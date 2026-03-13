@@ -22,7 +22,7 @@ For diffs, also read the full file when surrounding context is needed to underst
 
 Before reviewing, quickly check for project conventions:
 - Linter/formatter configs (eslint, prettier, ruff, etc.)
-- CLAUDE.md, CONTRIBUTING.md, .editorconfig
+- AGENTS.md, CLAUDE.md, CONTRIBUTING.md, .editorconfig
 - Language and framework in use
 
 Respect existing project conventions. Don't flag style choices that match the project's configured rules.
