@@ -30,7 +30,9 @@ brew install --cask ghostty font-jetbrains-mono-nerd-font
 | `config/gh/` | GitHub CLI preferences |
 | `config/git/` | Global gitignore |
 | `config/karabiner/` | Razer Naga mouse remapping for WoW |
-| `config/claude/` | Claude Code settings (status line) |
+| `config/claude/` | Claude Code settings, skills, and agents |
+| `config/codex/` | Codex skills and agents |
+| `config/agents/` | Shared agent-platform skills |
 
 ## Supported Languages
 

@@ -1,0 +1,118 @@
+## Workflow
+
+### Starting a Session
+
+1. Read project documentation for context (e.g., PRD, architecture docs, README).
+2. Check the task tracker (e.g., `docs/TASKS.md`, GitHub Issues) for current progress. Identify the next incomplete task.
+3. Start from a clean state on the default branch:
+   ```bash
+   git checkout main && git pull origin main
+   ```
+
+### During Development — Orchestrator Pattern
+
+If you were spawned as a Task Runner by an orchestrator (like Ralph), follow the Pipeline section of your prompt instead of this workflow.
+
+**You are the orchestrator.** Your role is to coordinate delegated work, verify results, and make decisions. Prefer using Codex agents/subagents when the runtime supports delegation. If it does not, execute directly while keeping context lean.
+
+**Subagent roster:**
+
+| Subagent | How to spawn | Purpose | Writes code? |
+|----------|-------------|---------|-------------|
+| Planner | Delegate if supported | Analyze code, produce implementation plan | No |
+| Implementer | Delegate if supported | Execute approved plan, write code + tests | Yes |
+| Code reviewer | `code-reviewer` agent | Review PR for bugs, security, style | No |
+| Debugger | `debugger` agent | Diagnose and fix errors, CI failures | Yes |
+
+**Development flow:**
+
+1. **Plan**: Delegate planning if the runtime supports it. Otherwise, analyze the task directly and produce a concrete implementation plan. Review the plan yourself — check for completeness, gaps, and alignment with the task. If it's lacking, re-plan with more specific instructions. Do not ask the user to approve the plan.
+2. **Branch**: Create a feature branch from main: `git checkout -b <type>/<short-slug>` (e.g., `feat/core-types`, `fix/timestamp-bug`). All implementation happens on this branch.
+3. **Implement**: Once the plan looks solid, delegate implementation if supported; otherwise implement directly while following the plan and CLAUDE.md conventions.
+4. **Verify**: After the subagent completes, run the full verify suite (lint, format, typecheck, test). If verification fails, spawn the `debugger` agent for test failures or a Task subagent for lint/type errors.
+5. When stuck or going in circles, stop. Re-plan before continuing.
+
+**When the orchestrator acts directly** (exceptions):
+- Git operations (commit, branch, push, merge)
+- Running commands (tests, linters, CI checks)
+- Trivial fixes (1-2 lines: typo, import, format issue)
+- Task tracker updates
+- Spawning audit subagents (docs, CI/CD, smoke test) — see Step 2 of the post-task pipeline
+
+**Verification protocol**: After any subagent writes code, the orchestrator runs the full verify suite before proceeding. Never trust subagent output without verification.
+
+**Progress tracking**: If the runtime exposes a planning/progress tool, use it to track each development and pipeline step. Otherwise, provide concise commentary updates so the user can follow progress.
+
+### After Completing a Task — Autonomous Pipeline
+
+Run this pipeline after every completed task. No user input required unless a step fails and cannot be auto-resolved.
+
+**Step 1: Verify locally.**
+Spawn a subagent to run the project's linting, formatting, type checking, and test commands. The subagent checks the Commands section of this file or `pyproject.toml`/`package.json`/`Makefile` for the exact commands, fixes any failures, and reports pass/fail.
+
+**Step 2: Audit docs, CI/CD, and deploy script (parallel).**
+Run these in parallel when the runtime supports delegation. Each worker gets the relevant skill instructions and an explicit directive: "Execute autonomously. Do not ask the user for approval — review your own plan and proceed."
+
+- **Docs audit**: Read `~/.codex/skills/docs-consolidator/SKILL.md` and pass its contents. The worker audits and consolidates project docs.
+- **CI/CD audit**: Read `~/.codex/skills/ci-cd-pipeline/SKILL.md` and pass its contents. The worker ensures GitHub Actions matches the current project state.
+- **Deploy script update**: Read `~/.codex/skills/smoke-test/SKILL.md` and pass its contents. The worker updates `scripts/deploy.sh` to deploy any new services locally and health-check them.
+- **Bug bash update**: Read `~/.codex/skills/bug-bash-update/SKILL.md` and pass its contents. The worker updates docs/BUG_BASH_GUIDE.md with new checklist items for features and fix annotations for bugs. For bug fixes, it verifies the fix in the browser before marking [x].
+
+Skip any if the skill is unavailable. Wait for all subagents to complete before proceeding.
+
+**Step 3: Commit all changes.**
+Stage and commit everything from the task and from Step 2. Write a concise, descriptive commit message. Use conventional commit prefixes when appropriate (`feat:`, `fix:`, `chore:`, `docs:`, `ci:`, `refactor:`, `test:`).
+
+**Step 4: Push and open a PR.**
+- Push the current branch and open a PR:
+  ```bash
+  git push -u origin HEAD
+  gh pr create --fill
+  ```
+
+**Step 5: Code review and CI (parallel).**
+Start both immediately after opening the PR:
+
+- **5a**: Spawn the `code-reviewer` subagent to review the PR.
+- **5b**: Run `gh pr checks --watch --fail-fast` to monitor CI.
+
+Handling results:
+- If review returns Critical or Warning findings:
+  - **3+ line fixes**: Spawn a Task subagent to apply them. Do not fix directly.
+  - **1-2 line fixes**: The orchestrator may apply these directly.
+  - Commit and push fixes. CI restarts automatically on the new push.
+- If CI fails:
+  1. Identify the failure: `gh pr checks` then `gh run view <run-id> --log-failed`.
+  2. Spawn the `debugger` subagent with the failure context.
+  3. Apply the fix on the same branch, commit, and push.
+  4. Max 3 CI retries. If still failing, stop and ask the user for help.
+- **Proceed to Step 6 when**: review is clean (APPROVE or only Nits) AND CI passes.
+
+**Step 6: Merge the PR and clean up.**
+```bash
+gh pr merge --squash --delete-branch
+git checkout main && git pull origin main
+```
+- **After merge, verify main CI:**
+  1. Wait for post-merge CI: `gh run list --branch main --limit 1 --json databaseId,status,conclusion | jq` then `gh run watch <run-id>`.
+  2. If CI fails: treat as highest priority. Diagnose with `gh run view <run-id> --log-failed`, fix on a new branch, and merge the fix before moving on.
+  3. The task is not complete until main CI is green.
+- **If merge conflict:**
+  1. Rebase onto the default branch: `git fetch origin main && git rebase origin/main`.
+  2. Force-push safely: `git push --force-with-lease`.
+  3. Wait for CI again (return to Step 5b). Max 1 retry.
+  4. If the conflict persists, stop and ask the user for help.
+
+**Step 7: Conserve context.**
+Keep context lean by delegating implementation when supported. If delegation is unavailable, execute directly but avoid unnecessary context expansion.
+
+### After Making a Mistake
+
+- Add a specific rule to "Mistakes to Avoid" at the bottom of this file.
+
+## Quality Standards
+
+- Be your own reviewer. Would this pass code review? What would a senior engineer question?
+- Prove it works. Don't just write code — run it. Show test output.
+- Demand elegance (balanced). For non-trivial changes, pause and ask: "is there a more elegant way?" If a fix feels hacky, ask: "knowing everything I know now, what's the right solution?" Skip this for simple, obvious fixes — don't over-engineer.
+- Ask clarifying questions upfront. Ambiguity leads to wasted work.
