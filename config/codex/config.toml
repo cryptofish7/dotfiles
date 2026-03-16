@@ -1,0 +1,13 @@
+model = "gpt-5.4"
+
+[tui]
+status_line = ["git-branch", "model-name", "context-used", "current-dir"]
+
+[projects."/Users/cryptofish/dotfiles"]
+trust_level = "trusted"
+
+[projects."/Users/cryptofish/workspace/forecaster"]
+trust_level = "trusted"
+
+[notice.model_migrations]
+"gpt-5.3-codex" = "gpt-5.4"

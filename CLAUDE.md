@@ -16,6 +16,9 @@ Personal macOS dev environment: Neovim + Tmux + Ghostty + Zsh.
 | `config/claude/settings.json` | Claude Code user-level settings (status line, plugins) |
 | `config/claude/skills/` | Claude Code user-level skills (symlinked to `~/.claude/skills/`) |
 | `config/claude/agents/` | Claude Code user-level agents (symlinked to `~/.claude/agents/`) |
+| `config/codex/config.toml` | Codex user-level settings (model, TUI status line) |
+| `config/codex/skills/` | Codex user-level skills (symlinked to `~/.codex/skills/`) |
+| `config/codex/agents/` | Codex user-level agents (symlinked to `~/.codex/agents/`) |
 | `setup.sh` | Symlinks everything into place |
 
 ## How Symlinks Work
@@ -26,6 +29,9 @@ Personal macOS dev environment: Neovim + Tmux + Ghostty + Zsh.
 - `config/claude/settings.json` -> `~/.claude/settings.json`
 - `config/claude/skills/` -> `~/.claude/skills/`
 - `config/claude/agents/` -> `~/.claude/agents/`
+- `config/codex/config.toml` -> `~/.codex/config.toml`
+- `config/codex/skills/` -> `~/.codex/skills/`
+- `config/codex/agents/` -> `~/.codex/agents/`
 
 When editing configs, edit the files in this repo — the symlinks mean changes take effect immediately (after sourcing/reloading where needed). Don't flag symlinked content as duplication.
 
