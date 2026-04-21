@@ -22,8 +22,10 @@ ln -sf "$DOTFILES/config/claude/settings.json" "$HOME/.claude/settings.json"
 # Remove real dirs so ln -sfn can create symlinks
 [ -d "$HOME/.claude/skills" ] && [ ! -L "$HOME/.claude/skills" ] && rm -rf "$HOME/.claude/skills"
 [ -d "$HOME/.claude/agents" ] && [ ! -L "$HOME/.claude/agents" ] && rm -rf "$HOME/.claude/agents"
+[ -d "$HOME/.claude/commands" ] && [ ! -L "$HOME/.claude/commands" ] && rm -rf "$HOME/.claude/commands"
 ln -sfn "$DOTFILES/config/claude/skills" "$HOME/.claude/skills"
 ln -sfn "$DOTFILES/config/claude/agents" "$HOME/.claude/agents"
+ln -sfn "$DOTFILES/config/claude/commands" "$HOME/.claude/commands"
 
 # Codex
 mkdir -p "$HOME/.codex"
