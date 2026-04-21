@@ -66,7 +66,7 @@ Go through each item. For each, either say "OK" or flag the specific problem.
 PROMPT
 ```
 
-5. Present the Codex output to the user.
+5. Critically evaluate the Codex output before presenting it. Codex is an advisor, not an authority — its review can be wrong, out-of-context, or push for changes that don't fit the plan's goals. For each item, decide whether you agree. Present the review to the user along with your own take: which items you'd act on, which you'd push back on, and why. Don't mechanically treat every flagged issue as something to fix.
 
 ## Notes
 

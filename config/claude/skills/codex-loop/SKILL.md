@@ -29,10 +29,10 @@ Never invent a plan file that doesn't exist. Never run the loop against a file y
 
 Stop the loop when **any** of these are true:
 
-1. **Approved**: Codex returns verdict `APPROVED` and zero `BLOCKER:` items.
+1. **Approved**: Codex returns verdict `APPROVED`, or the only remaining `BLOCKER:` items are ones you've deliberately dismissed with reasoning (see "Address blockers" below).
 2. **Max iterations**: 5 rounds completed.
-3. **Repeated blocker**: A BLOCKER in round N substantively matches one already raised in a prior round (means Claude's edit didn't resolve it, or reviewer and author disagree — needs human).
-4. **No progress**: Round N's blocker count ≥ round N-1's (loop isn't converging).
+3. **Repeated blocker**: A BLOCKER in round N substantively matches one already raised in a prior round *and* wasn't dismissed by you — means your edit didn't resolve it. Needs human.
+4. **No progress**: Round N's count of un-dismissed blockers ≥ round N-1's (loop isn't converging).
 
 On any stop condition other than #1, surface the reason to the user and ask whether to continue manually.
 
@@ -42,7 +42,7 @@ On any stop condition other than #1, surface the reason to the user and ask whet
 
 1. Resolve the filepath from cwd. Read the plan file. Error out if it doesn't exist.
 2. Scan the plan for file paths, function names, module references. Read up to 5–10 directly-referenced files for codebase context. Also read `CLAUDE.md` if present.
-3. Initialize an iteration log in memory (not a file): `{round, blockers_raised, blockers_addressed, verdict, raw_output}`.
+3. Initialize an iteration log in memory (not a file): `{round, blockers_raised, blockers_addressed, blockers_dismissed, verdict, raw_output}`.
 
 ### Each round
 
@@ -57,15 +57,21 @@ On any stop condition other than #1, surface the reason to the user and ask whet
    PROMPT
    ```
 3. **Parse output**: extract verdict line and all `BLOCKER:` items. Ignore `SUGGESTION:` and `NIT:` items (don't act on them in the loop, but keep them in the final summary).
-4. **Check termination** (rules 1–4 above). If stopping, skip to "Final report."
-5. **Address blockers**: edit the plan file to fix each BLOCKER. Only BLOCKERs — do not rewrite structure, do not address suggestions/nits. If a blocker requires a design decision the plan's author should make, stop the loop and ask the user.
-6. Log the round and continue to the next round.
+4. **Triage blockers**: for each BLOCKER, decide whether you actually agree it's a blocker. Codex is an advisor, not an authority — it can misread intent, push for changes outside the plan's scope, or be plain wrong about the codebase. Classify each as:
+   - **Accept** — you agree; edit the plan to fix it.
+   - **Dismiss** — you disagree; record a one-line rationale in the iteration log and carry it forward in "Prior Review History" so Codex sees *why* you're not acting on it. Dismissed blockers don't count toward termination rules 3 or 4.
+   - **Defer to user** — legitimate concern but requires a design decision the plan's author should make. Stop the loop and ask the user.
+   Don't dismiss casually — if Codex is probably right, accept it. But don't accept a blocker just because Codex flagged it.
+5. **Check termination** (rules 1–4 above). If stopping, skip to "Final report."
+6. **Address accepted blockers**: edit the plan file to fix each accepted BLOCKER. Don't rewrite structure, don't address suggestions/nits.
+7. Log the round (including dismissed blockers and their rationale) and continue to the next round.
 
 ### Final report
 
 Present to the user:
 - Why the loop stopped (approved / max iterations / repeated blocker / no progress / user-decision needed)
-- Per-round summary: blocker count in → blocker count out
+- Per-round summary: blockers raised → accepted / dismissed / deferred
+- All dismissed blockers with your rationale, so the user can overrule you if they disagree
 - Full list of unaddressed SUGGESTIONs and NITs from the final round (the user may want to handle these manually)
 - Path to the (now-updated) plan file
 
@@ -84,9 +90,11 @@ Your job: find issues that will cause the implementation to fail, waste time, or
 
 <INSERT RELEVANT FILE CONTENTS AND CLAUDE.MD CONVENTIONS>
 
-## Prior Review History (for context — do not re-raise resolved issues)
+## Prior Review History (for context — do not re-raise resolved or dismissed issues)
 
-<INSERT SHORT SUMMARY OF PRIOR ROUNDS' BLOCKERS, OR "none — this is round 1">
+<INSERT SHORT SUMMARY OF PRIOR ROUNDS' BLOCKERS (resolved) AND DISMISSED BLOCKERS WITH THE AUTHOR'S RATIONALE, OR "none — this is round 1">
+
+If you still believe a dismissed blocker matters, say so once with a stronger argument — don't re-raise it verbatim.
 
 ## Review Dimensions
 
