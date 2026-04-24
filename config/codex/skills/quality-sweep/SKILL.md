@@ -1,6 +1,6 @@
 ---
 name: quality-sweep
-description: Full-codebase quality sweep across 8 concern-focused lanes: deduplication/DRY, shared types, dead code, circular dependencies, weak types, defensive programming, legacy fallbacks, and AI slop/comment hygiene. Use when the user asks to "quality sweep", "clean up the codebase", "remove slop", "kill dead code", "fix weak types everywhere", or wants a broad cross-cutting cleanup executed rather than a per-package refactor audit.
+description: "Full-codebase quality sweep across 8 concern-focused lanes: deduplication/DRY, shared types, dead code, circular dependencies, weak types, defensive programming, legacy fallbacks, and AI slop/comment hygiene. Use when the user asks to \"quality sweep\", \"clean up the codebase\", \"remove slop\", \"kill dead code\", \"fix weak types everywhere\", or wants a broad cross-cutting cleanup executed rather than a per-package refactor audit."
 ---
 
 # Quality Sweep
