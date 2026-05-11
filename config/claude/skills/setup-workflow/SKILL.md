@@ -66,6 +66,10 @@ Read `references/workflow-template.md` — this is the canonical workflow conten
 
 **If a `## Quality Standards` section already exists:** Do not inject a duplicate. Only inject the Quality Standards section (from the template) when creating a new CLAUDE.md or when no such section exists.
 
+**If a `## BUG_BASH_GUIDE Discipline` section already exists:** Do not inject a duplicate. Only inject this section (from the template) when creating a new CLAUDE.md or when no such section exists. Apply the same conditional-inject pattern as Quality Standards.
+
+**If a `## Tasks Tracker Discipline` section already exists:** Do not inject a duplicate. Only inject this section (from the template) when creating a new CLAUDE.md or when no such section exists. When injecting into an existing CLAUDE.md, place it directly after `## BUG_BASH_GUIDE Discipline` (or after `## Quality Standards` if BUG_BASH_GUIDE Discipline is also absent).
+
 **If no CLAUDE.md exists:** Create a new `CLAUDE.md` in the project root with this structure:
 ```markdown
 # CLAUDE.md

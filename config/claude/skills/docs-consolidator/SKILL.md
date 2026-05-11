@@ -57,6 +57,16 @@ Read every doc (if not already read in Phase 1) and compare against the registry
 - **Poor organization**: docs where sections are out of logical order, or where related information is scattered across unrelated sections.
 - **Undocumented feature**: Examine the current branch name, recent commits, and changed files to determine if a significant new feature was implemented. Check each doc in the registry to see if it needs updating for this feature. For example: does the tasks/progress doc need a new milestone? Does the architecture doc need new components or APIs? Does a security doc need new threat analysis? Flag each doc that needs additions.
 
+#### Tasks tracker audit
+
+If the registry identifies a tasks/progress doc (e.g., `docs/TASKS.md`), audit it for:
+
+- **Untick'd completed work**: cross-check recent commits on the current branch + any merged PRs since the last edit against open `[ ]` items. Flag any item whose work has shipped — Phase 4 will tick `[x]`.
+- **PR-ref qualifiers**: `(PR #N)`, `(#N)`, or `branch: foo/bar` in task descriptions, sub-bullets, or section headings. Git log/blame is the audit trail — flag for strip.
+- **Over-decomposed sub-bullets**: nested items at PR-contents resolution that don't help a future reader understand what scope was completed. Flag for fold into the parent item.
+- **Tombstone phases**: whole sections marked "Superseded" / "Replaced by" preserved with their original content. Flag for collapse to a one-liner or deletion.
+- **Per-PR milestones**: a new milestone created for a single PR when an existing milestone's scope would have fit. Flag for fold.
+
 #### CLAUDE.md deep audit
 
 Additionally, collect all CLAUDE.md files (root, `packages/*/CLAUDE.md`, `~/.claude/CLAUDE.md`, `~/.claude/projects/<project-path>/CLAUDE.md`) and audit them for:
@@ -106,7 +116,7 @@ After approval, apply changes doc by doc:
 5. Update any cross-references that broke due to moves
 6. Document new features across relevant docs:
    - For each doc flagged as needing feature documentation, add content to the appropriate existing sections following the doc's style.
-   - Tasks/progress docs: create a new milestone or section tracking the completed work. Mark items as done. Include PR references if available.
+   - Tasks/progress docs: tick `[x]` items completed by the current branch/PR. Strip any `(PR #N)` / `(#N)` / `branch:` qualifiers from descriptions and headings. Add new milestone entries only for genuinely new scope; otherwise fold into the matching existing milestone. Items describe outcomes, not PR contents. Collapse "Superseded" tombstones to a one-liner or delete. Run a hygiene pass on neighboring items each edit.
    - Architecture docs: add new components, endpoints, schemas, or data flows.
    - Product/PRD docs: add new feature specs or user flows.
    - Security docs: add new trust assumptions or threat analysis.
@@ -128,6 +138,7 @@ After approval, apply changes doc by doc:
 
 ## Guidelines
 
+- **Doc hygiene (universal).** When writing or editing any doc, strip pollution: (a) `(PR #N)`, `(#N)`, or `branch: foo/bar` qualifiers in headings/items — git log/blame is the audit trail; (b) PR-numbered sub-sections that should fold into the surrounding section; (c) "Superseded" / "Replaced by" tombstones — collapse to one line or delete; (d) "(new in vN)" / "(post X migration)" qualifiers that turn stale once X ships. On any edit to an existing doc, run a hygiene pass on neighboring items. Two genres get dedicated doctrine on top of this rule: regression checklists (see BUG_BASH_GUIDE Discipline in the project CLAUDE.md) and forward-looking trackers (see Tasks Tracker Discipline). Stable reference docs (PRD, architecture, security, design system) just follow the universal rule — don't add doc-specific doctrine for them.
 - Prefer cross-references over duplication. A one-line pointer is better than a restated paragraph.
 - Don't merge docs unless the user explicitly asks. The goal is to put information in the right place, not reduce the number of files.
 - Preserve the user's writing style and voice. Clean up structure, not prose.

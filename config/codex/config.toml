@@ -3,6 +3,9 @@ model = "gpt-5.4"
 [tui]
 status_line = ["git-branch", "model-name", "context-used", "current-dir"]
 
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+
 [projects."/Users/cryptofish/dotfiles"]
 trust_level = "trusted"
 

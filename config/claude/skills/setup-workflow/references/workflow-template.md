@@ -116,3 +116,40 @@ Keep context lean by delegating implementation to Task subagents rather than wri
 - Prove it works. Don't just write code — run it. Show test output.
 - Demand elegance (balanced). For non-trivial changes, pause and ask: "is there a more elegant way?" If a fix feels hacky, ask: "knowing everything I know now, what's the right solution?" Skip this for simple, obvious fixes — don't over-engineer.
 - Ask clarifying questions upfront. Ambiguity leads to wasted work.
+
+## BUG_BASH_GUIDE Discipline
+
+`docs/BUG_BASH_GUIDE.md` is a **stable regression checklist**, not a per-PR scratchpad. It exists to be re-run before every release.
+
+**Sections are user-facing surfaces** (and non-UI surfaces like backend health, jobs, or workers where bug bash exercises them through the UI or CLI). Never name a section after a PR, branch, or release. Each item is a recurring regression check.
+
+**Two tests before adding anything**:
+
+1. **Long-life wording**: would this exact wording still make sense to run 6 months from now, after this PR is forgotten? If the wording references a PR, branch, redesign generation, sprint, or "new" anything, rewrite it surface-first or drop it. This catches the failure mode of "yes, this technically recurs" — every new feature *technically* has ongoing regression risk; only the ones that read as enduring surface behavior belong here.
+2. **Surface**: does it fold into an existing section? Default yes. New sections only for genuinely new user-facing surfaces.
+
+**Per-PR rules**:
+
+- Cap additions at ~3 items per PR. If you legitimately need more, you're probably adding a new surface section — that's fine, but verify against the surface test. Most PRs add 0–1 items; many add zero.
+- `feat:` adds an item only when it passes the long-life test. Launch verification ("does this new layout render correctly") goes in the PR description.
+- `fix:` annotates the existing item the bug violated as `[!] FIXED (PR #N)`. **`[!] FIXED` requires browser verification before becoming `[x]`** — never skip straight to `[x]` from code review or test output. After browser verification with screenshot evidence, convert to `[x]` and **strip the `(PR #N)` annotation** (e.g. `[!] FIXED (PR #471) modal closes on outside click` → `[x] modal closes on outside click`). Git blame is the audit trail. If no existing item caught the bug, add ONE recurring item that would have caught the class of bug, not the specific instance.
+- Never create a section named after a PR, branch, or "redesign vN." Fold into the surface.
+
+**Items can be removed when** (a) the surface no longer exists, (b) the item is a duplicate, (c) it's a one-shot launch verification that slipped in, or (d) the behavior it tests was deliberately changed. **Removing an item because it keeps failing is never a valid reason** — fix the regression instead.
+
+The `bug-bash-update` skill enforces these rules at write time and runs a hygiene pass on neighboring items each time it edits a section (strips orphan `(PR #N)` tags, folds adjacent per-PR sub-sections, drops dead one-shots). If a change doesn't fit under an existing surface within the cap, that's the signal it doesn't belong in the doc — write it in the PR description instead.
+
+## Tasks Tracker Discipline
+
+`docs/TASKS.md` (or the project's task tracker) is a **forward-looking outcome tracker**, not a per-PR changelog. Each item describes scope; git log is the audit trail.
+
+**Rules:**
+
+- Items are scoped at the **outcome** level, not per-PR/commit.
+- No `(PR #N)`, `(#N)`, or `branch: foo/bar` qualifiers in task descriptions or section headings. If they leak in during planning, strip them when ticking `[x]`.
+- New milestones only for genuinely new scope. Otherwise fold into the existing milestone whose scope matches. A new milestone per PR is a smell.
+- Sub-bullet decomposition cap: don't decompose below "what a future reader needs to know was done." Aim for one bullet per outcome, not one bullet per commit.
+- Superseded phases are deleted or collapsed to a single one-liner — never preserved as tombstones with their original content intact.
+- When a PR ships work covered by an item, **tick `[x]` as part of the post-task pipeline**. The `docs-consolidator` skill enforces this in Step 2; the orchestrator should not rely on memory.
+
+**Universal doc hygiene (applies to all other docs too):** no `(PR #N)` / `branch:` qualifiers in headings or items, no "(new in vN)" / "(post X migration)" markers that turn stale once X ships, no "Superseded" tombstones that preserve the original content (a one-line "Superseded by Milestone N" is fine). Run a hygiene pass on neighboring items each edit. The `docs-consolidator` skill enforces this at write time. Stable reference docs (PRD, architecture, security, design system) only need the universal rule; the two doctrines above (BUG_BASH_GUIDE Discipline, Tasks Tracker Discipline) layer genre-specific tests on top.
