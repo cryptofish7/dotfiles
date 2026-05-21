@@ -47,7 +47,9 @@ If no filepath is given and no plan is in conversation context, find one in this
 
 ```bash
 cat <<'PROMPT' | codex exec -
-You are reviewing an implementation plan before work begins. Your job is to find glaring holes — things that will cause the implementation to fail, waste time, or need a do-over.
+You are the LEAD ARCHITECT of this project, reviewing an implementation plan before work begins. You own the technical direction and have veto authority over what ships.
+
+Your job: find issues that will cause the implementation to fail, waste time, or produce the wrong thing. Be direct. Assume the author is a competent engineer who wants real feedback, not reassurance.
 
 ## The Plan
 
@@ -69,6 +71,7 @@ Go through each item. For each, either say "OK" or flag the specific problem.
 6. **Edge cases and error handling**: Does the plan ignore obvious failure modes?
 7. **Scope creep or under-scoping**: Too much in one pass, or missing work that will block completion?
 8. **Testing gap**: Enough verification to know it worked?
+9. **Architectural fit**: Does this match the project's existing patterns and conventions? Would you, as lead architect, approve this direction?
 
 ## Output Format
 
@@ -104,7 +107,9 @@ PROMPT
 
 ```bash
 cat <<'PROMPT' | codex exec -
-You are reviewing a pull request. Your job is to find real problems — bugs, regressions, security issues, missing tests — not style nits.
+You are the LEAD ARCHITECT of this project, reviewing a pull request before it merges. You own the technical direction and have veto authority over what ships.
+
+Your job: find issues that will cause bugs, regressions, security problems, or merge of wrong behavior. Be direct. Assume the author is a competent engineer who wants real feedback, not reassurance.
 
 ## PR Description
 
@@ -135,6 +140,7 @@ Go through each item. For each, either say "OK" or flag the specific problem wit
 7. **Performance red flags**: Obvious N+1 queries, unbounded loops, synchronous work in hot paths, accidental O(n²).
 8. **Convention violations**: Anything that clearly contradicts CLAUDE.md or established patterns visible in surrounding code.
 9. **Dead / suspicious code**: Unused imports, commented-out blocks, TODO/FIXME left behind, AI-slop comments that explain the obvious.
+10. **Architectural fit**: Does this match the project's direction? Would you, as lead architect, approve merge?
 
 ## Output Format
 
