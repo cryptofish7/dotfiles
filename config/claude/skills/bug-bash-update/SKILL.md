@@ -55,6 +55,7 @@ Add an item only when ALL three guardrail tests pass.
 - Cap: 3 items per PR. Most PRs add 0–1 recurring items; many add zero.
 - ❌ Bad: `- [ ] Hero section renders with new layout and copy` (one-shot launch check)
 - ✅ Good: `- [ ] Home page has no horizontal scroll at 320/375/768/1024/1440px` (recurring layout regression risk)
+- **Write surface-first, not feature-first.** Items must describe enduring user-visible behavior, not "tests the X feature I just added with Y component and Z prop." If the wording names specific component names, file paths, or PR-introduced jargon (e.g. `LeaderboardTable`, `ForecasterAvatar size=32`, "new pill filter row"), it fails the long-life test — rewrite as a surface check (e.g. "leaderboard table renders 8 columns without horizontal scroll at 1024/1440px") or skip. Parenthetical scope notes describing implementation detail belong in the PR description, not the checklist. The same rule rejects date stamps and verification observation tails on new items: don't seed an item with `— verified 2026-05-12` or `— note: observed at 12px offset`. The item is a recurring regression check, not a record of how it looked the day it shipped.
 
 **`fix:` — Bug fix**
 
@@ -75,6 +76,13 @@ Applies to `fix:` commits that touched `[!] FIXED` items.
 
 **Verified:**
 - Convert `[!] FIXED (PR #XX) ...` to `[x] <description>` and **strip the `(PR #XX)` annotation**. Git blame is the audit trail; the doc shouldn't carry every PR reference forever.
+- **Tick only — don't annotate.** Do NOT append a parenthetical scope note describing what the fix changed, a date stamp, or a verification observation tail. The original item wording (cleaned of PR refs) is the regression check; the fix detail and any point-in-time evidence belong in the PR description, not the checklist. `[x]` already means "verified in browser with screenshot evidence"; git blame is the timestamp; observed values rot.
+  - ❌ `[x] modal closes on outside click (added useOnClickOutside hook to ClosePositionModal)` ← implementation scope
+  - ❌ `[x] modal closes on outside click — verified 3/17/2026` ← date stamp
+  - ❌ `[x] modal closes on outside click — verified 2026-03-17: clicked outside, modal closed cleanly` ← date stamp + observation tail
+  - ❌ `[x] modal closes on outside click — partial 2026-05-12: only desktop confirmed` ← partial-verification tail
+  - ❌ `[x] modal closes on outside click — note: also closes on Escape` ← point-in-time observation
+  - ✅ `[x] modal closes on outside click` ← tick only
 
 **Not verified:**
 - Leave as `[!] FIXED`, report what's still broken, hand back to the orchestrator.
@@ -86,7 +94,7 @@ Applies to `fix:` commits that touched `[!] FIXED` items.
 
 Before finishing, scan the section(s) you touched for low-cost cleanup:
 
-1. **Strip stale annotations.** Any `[x]` item still carrying `(PR #N)` whose PR has been in production for ≥1 release: strip the parenthetical. The item description should stand on its own.
+1. **Strip stale annotations.** Any `[x]` item still carrying `(PR #N)` whose PR has been in production for ≥1 release: strip the parenthetical. Same applies to any parenthetical scope note describing implementation detail (component names, prop additions, layout descriptions) — those belong in the PR description, not the checklist. Also strip any date stamp or verification observation tail you find on `[x]` items: `— verified MM/DD/YYYY`, `— verified YYYY-MM-DD: <observation>`, `— partial MM/DD/YYYY: <observation>`, `— note: <…>`, `— context: <…>`. `[x]` already means "verified in browser with screenshot evidence"; git blame has the date; observed values rot. The item description should stand on its own.
 2. **Spot duplicates.** If your edit revealed two items covering the same check, merge them. Keep the clearer wording.
 3. **Spot one-shots.** If you notice a per-PR section ("PR #485 Strict-Mode E2E", "Section 17 — UI Redesign vN") in the same surface, fold its still-recurring items into the surface section and delete the rest. Do this only when it's adjacent to your edit — don't refactor the whole doc.
 

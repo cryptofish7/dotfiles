@@ -63,6 +63,7 @@ If the registry identifies a tasks/progress doc (e.g., `docs/TASKS.md`), audit i
 
 - **Untick'd completed work**: cross-check recent commits on the current branch + any merged PRs since the last edit against open `[ ]` items. Flag any item whose work has shipped — Phase 4 will tick `[x]`.
 - **PR-ref qualifiers**: `(PR #N)`, `(#N)`, or `branch: foo/bar` in task descriptions, sub-bullets, or section headings. Git log/blame is the audit trail — flag for strip.
+- **Parenthetical scope notes appended at tick time**: implementation-detail descriptions tacked onto ticked items (column counts, component names, prop additions, layout descriptions). Same audit-trail principle as PR-ref qualifiers — flag for strip.
 - **Over-decomposed sub-bullets**: nested items at PR-contents resolution that don't help a future reader understand what scope was completed. Flag for fold into the parent item.
 - **Tombstone phases**: whole sections marked "Superseded" / "Replaced by" preserved with their original content. Flag for collapse to a one-liner or deletion.
 - **Per-PR milestones**: a new milestone created for a single PR when an existing milestone's scope would have fit. Flag for fold.
@@ -116,7 +117,17 @@ After approval, apply changes doc by doc:
 5. Update any cross-references that broke due to moves
 6. Document new features across relevant docs:
    - For each doc flagged as needing feature documentation, add content to the appropriate existing sections following the doc's style.
-   - Tasks/progress docs: tick `[x]` items completed by the current branch/PR. Strip any `(PR #N)` / `(#N)` / `branch:` qualifiers from descriptions and headings. Add new milestone entries only for genuinely new scope; otherwise fold into the matching existing milestone. Items describe outcomes, not PR contents. Collapse "Superseded" tombstones to a one-liner or delete. Run a hygiene pass on neighboring items each edit.
+   - Tasks/progress docs: tick `[x]` items completed by the current branch/PR. Strip any `(PR #N)` / `(#N)` / `branch:` qualifiers **and parenthetical scope notes describing implementation detail** from descriptions and headings. Add new milestone entries only for genuinely new scope; otherwise fold into the matching existing milestone. Items describe outcomes, not PR contents. Collapse "Superseded" tombstones to a one-liner or delete. Run a hygiene pass on neighboring items each edit.
+     - **Tick only — don't annotate.** When ticking an existing item to `[x]`, do NOT append a parenthetical scope note describing what shipped, a date stamp, or a verification observation tail. Forbidden patterns:
+       - `[x] Leaderboard page (8-column table layout, pill sort/period filter row, …)` ← implementation scope ❌
+       - `[x] Wallet activity panel (adds scope dropdown + popover focus management)` ← implementation scope ❌
+       - `[x] Header shows "Login" button — verified 3/17/2026` ← date stamp ❌
+       - `[x] Header shows "Login" button — verified 2026-03-17: logged out, header showed blue "Login" button` ← date stamp + observation tail ❌
+       - `[x] Trade panel — partial 2026-05-12: only bear branch confirmed` ← partial-verification tail ❌
+       - `[x] Trade panel — note: observed slippage popover at 12px offset` ← point-in-time observation ❌
+       - `[x] Item wording (PR #471)` ← PR reference ❌
+       - `[x] Leaderboard page` ← tick only ✅
+     - `[x]` already means "verified in browser with screenshot evidence." Git blame is the timestamp. The existing wording is the outcome; specific observed values are point-in-time and rot. If you need to record evidence for yourself, it lives in the PR description or test fixtures, not the tracker. If the existing wording is so vague the outcome isn't clear, fix the wording in a separate hygiene pass — never as an annotation at tick time.
    - Architecture docs: add new components, endpoints, schemas, or data flows.
    - Product/PRD docs: add new feature specs or user flows.
    - Security docs: add new trust assumptions or threat analysis.
