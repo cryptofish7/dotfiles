@@ -131,7 +131,12 @@ After approval, apply changes doc by doc:
    - Architecture docs: add new components, endpoints, schemas, or data flows.
    - Product/PRD docs: add new feature specs or user flows.
    - Security docs: add new trust assumptions or threat analysis.
-   - CLAUDE.md: add key hooks, architectural notes, or gotchas (keep lean).
+   - CLAUDE.md: additions must pass all three tests, or they go elsewhere:
+     1. **Grep test** — would a 5-minute code read or `grep` surface this? If yes, don't write it. Hook names, file paths, function signatures, component lists, UI flow steps, API field lists all fail this test. CLAUDE.md is for things that bite *silently* — knowledge no amount of reading the code reveals.
+     2. **Length test** — your entry is ≤3 sentences. If you need more, you're writing `docs/`. Move the body there and leave a one-line cross-reference here.
+     3. **6-month test** — read your wording as if 6 months have passed. Does it still hold, or does it rot? Anything tied to a PR, a "currently", a "new in", a specific component name that could be renamed, or a "the flow is now…" framing fails this test. Describe the durable invariant, not the current implementation.
+
+     If your edit fails any test, the right answer is almost always "add it to the appropriate doc in `docs/` and update the cross-reference here, if one's needed at all." Adding nothing to CLAUDE.md is a valid outcome of feature work.
    - Only update docs where the feature introduces something new for that doc's domain. Don't force updates.
    - All existing guidelines apply: prefer cross-references over duplication, keep CLAUDE.md lean, preserve writing style, one source of truth per topic.
 7. Apply approved CLAUDE.md optimizations:
