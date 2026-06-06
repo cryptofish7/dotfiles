@@ -13,11 +13,12 @@ Update `docs/BUG_BASH_GUIDE.md` after a task completes. The doc is a **stable re
 
 Apply these tests before adding ANYTHING:
 
-1. **Recurrence test** — would a reasonable person re-run this on the next release? If no, it's launch verification — write it in the PR description and stop. *Examples that fail this test*: "new Hero section renders correctly," "PR #485 strict-mode E2E flow," "TPSL slide 05 layout matches Figma."
-2. **Surface test** — does it fit under an existing section in the doc? Default yes. New sections only when a genuinely new user-facing surface is introduced (rare). Sections are nouns the user can point at — never PR numbers, branch names, "redesign vN," or release names.
-3. **Cap test** — are you about to add more than 3 items for this PR? If yes, you're probably restating launch verification or duplicating existing items. Cut down or skip.
+1. **E2E-function test** — is this a single user-facing flow a tester can walk and *observe* pass/fail, AND can they *deterministically trigger* the condition in the browser on the deployed build? BBG is for testing major functions end-to-end — not for invariants, properties, or coverage statements. If the item quantifies over many paths ("every / all / never X holds"), or the condition can't be forced through the UI (client-side guards block it, it needs contrived chain state, it only appears under load, the upstream bug is already fixed so it no longer reproduces), it belongs in **unit/integration tests**, not here. *Examples that fail this test*: "every transaction failure toast shows a useful reason" (invariant over all failure paths → unit tests), "decoder maps every custom error correctly" (unit test), "no race under concurrent swaps" (not UI-triggerable). The single triggerable flow IS allowed (e.g. "a reverting trade shows a formatted error toast") — the all-quantified version is not.
+2. **Recurrence test** — would a reasonable person re-run this on the next release? If no, it's launch verification — write it in the PR description and stop. *Examples that fail this test*: "new Hero section renders correctly," "PR #485 strict-mode E2E flow," "TPSL slide 05 layout matches Figma."
+3. **Surface test** — does it fit under an existing section in the doc? Default yes. New sections only when a genuinely new user-facing surface is introduced (rare). Sections are nouns the user can point at — never PR numbers, branch names, "redesign vN," or release names.
+4. **Cap test** — are you about to add more than 3 items for this PR? If yes, you're probably restating launch verification or duplicating existing items. Cut down or skip.
 
-If a change fails any test, the right answer is usually to skip the doc and put the verification in the PR description.
+If a change fails any test, the right answer is usually to skip the doc and put the verification in the PR description (or, for pure logic, a unit test).
 
 ## Workflow
 
@@ -69,10 +70,13 @@ Add an item only when ALL three guardrail tests pass.
 
 Applies to `fix:` commits that touched `[!] FIXED` items.
 
+0. **Establish the repro first.** Write the exact preconditions to trigger the original failure (which wallet, balance, forecaster state, inputs), then set that state up fresh using the doc's **"Preconditions & Trigger Recipes"** section — that's what makes verification deterministic instead of improvised. Never assume a specific forecaster/wallet still exists; the testnet DB is wiped regularly, so create the state on demand. If you cannot construct a repro (no way to trigger it through the UI), the behavior isn't browser-verifiable — it should be covered by a unit test and noted in the PR, not carried as a `[!] FIXED` BBG item. Say so and stop.
 1. Read the deployment URL from the doc's "Test Environment" section. NEVER use localhost.
 2. If no URL is listed, stop and ask the user.
-3. Open the deployed build. Navigate to the affected surface. Confirm the bug is gone and the correct behavior renders.
+3. Open the deployed build. Navigate to the affected surface. Reproduce the original trigger, then confirm the bug is gone and the correct behavior renders.
 4. Take a screenshot.
+
+**Original failure no longer reproduces** (e.g. the upstream cause was fixed elsewhere, so the trigger now succeeds): do NOT leave the item dangling as `[!] FIXED`. Re-verify the happy path, then **retire or merge the item** — a `[!]` whose condition can't be reproduced is a cleanup signal (duplicate / behavior-changed), not a permanent resident. Note the finding for the orchestrator.
 
 **Verified:**
 - Convert `[!] FIXED (PR #XX) ...` to `[x] <description>` and **strip the `(PR #XX)` annotation**. Git blame is the audit trail; the doc shouldn't carry every PR reference forever.
