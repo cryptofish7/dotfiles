@@ -94,15 +94,24 @@ require('lazy').setup({
         'neovim/nvim-lspconfig',
         dependencies = {
             -- Automatically install LSPs to stdpath for neovim
-            'williamboman/mason.nvim',
-            'williamboman/mason-lspconfig.nvim',
+            -- NOTE: mason moved orgs; these were williamboman/*
+            'mason-org/mason.nvim',
+            'mason-org/mason-lspconfig.nvim',
 
             -- Useful status updates for LSP
             -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-            { 'j-hui/fidget.nvim', tag = 'legacy', opts = {} },
+            { 'j-hui/fidget.nvim', opts = {} },
+        },
+    },
 
-            -- Additional lua configuration, makes nvim stuff amazing!
-            'folke/neodev.nvim',
+    {
+        -- Lua LS support for the Neovim API. Replaces neodev.nvim, which is EOL.
+        'folke/lazydev.nvim',
+        ft = 'lua',
+        opts = {
+            library = {
+                { path = '${3rd}/luv/library', words = { 'vim%.uv' } },
+            },
         },
     },
 
@@ -237,9 +246,13 @@ require('lazy').setup({
 
     {
         -- Highlight, edit, and navigate code
+        -- NOTE: pinned to the frozen `master` branch, whose API this config
+        -- still uses. Migrating to the `main` rewrite is a separate change;
+        -- drop the pins then.
         'nvim-treesitter/nvim-treesitter',
+        pin = true,
         dependencies = {
-            'nvim-treesitter/nvim-treesitter-textobjects',
+            { 'nvim-treesitter/nvim-treesitter-textobjects', pin = true },
         },
         build = ':TSUpdate',
     },
@@ -327,7 +340,12 @@ require('lazy').setup({
             })
         end,
     },
-}, {})
+}, {
+    -- Newer lazy.nvim installs luarocks (via hererocks) for plugins that ship a
+    -- rockspec. Telescope ships one, but its only dependency is plenary, which
+    -- is already managed as a plugin -- so skip the toolchain.
+    rocks = { enabled = false },
+})
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -609,25 +627,18 @@ end
 --   ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
 -- }
 
--- mason-lspconfig requires that these setup functions are called in this order
--- before setting up the servers.
-require('mason').setup()
-require('mason-lspconfig').setup()
-
 -- Enable the following language servers
 --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
 --
---  Add any additional override configuration in the following tables. They will be passed to
---  the `settings` field of the server config. You must look up that documentation yourself.
---
---  If you want to override the default filetypes that your language server will attach to you can
---  define the property 'filetypes' to the map in question.
+--  Each entry is a `vim.lsp.Config` merged over the defaults nvim-lspconfig
+--  ships in its `lsp/<name>.lua`, so overrides go under `settings`, and
+--  `filetypes` overrides which buffers the server attaches to.
 local servers = {
     -- clangd = {},
     gopls = {},
     pyright = {},
     rust_analyzer = {},
-    tsserver = {},
+    ts_ls = {},
     -- html = { filetypes = { 'html', 'twig', 'hbs'} },
     eslint = {},
     jsonls = {},
@@ -635,36 +646,34 @@ local servers = {
     solidity = {},
 
     lua_ls = {
-        Lua = {
-            workspace = { checkThirdParty = false },
-            telemetry = { enable = false },
+        settings = {
+            Lua = {
+                workspace = { checkThirdParty = false },
+                telemetry = { enable = false },
+            },
         },
     },
 }
 
--- Setup neovim lua configuration
-require('neodev').setup()
-
 -- nvim-cmp supports additional completion capabilities, so broadcast that to servers
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
--- Ensure the servers above are installed
-local mason_lspconfig = require 'mason-lspconfig'
+-- Applied to every server, under its own config.
+vim.lsp.config('*', {
+    capabilities = capabilities,
+    on_attach = on_attach,
+})
 
-mason_lspconfig.setup {
+for server, config in pairs(servers) do
+    vim.lsp.config(server, config)
+end
+
+require('mason').setup()
+
+-- Installs anything missing, then enables each installed server for us --
+-- `automatic_enable` defaults to true and calls vim.lsp.enable() on our behalf.
+require('mason-lspconfig').setup {
     ensure_installed = vim.tbl_keys(servers),
-}
-
-mason_lspconfig.setup_handlers {
-    function(server_name)
-        require('lspconfig')[server_name].setup {
-            capabilities = capabilities,
-            on_attach = on_attach,
-            settings = servers[server_name],
-            filetypes = (servers[server_name] or {}).filetypes,
-        }
-    end,
 }
 
 -- [[ Configure nvim-cmp ]]
