@@ -78,7 +78,14 @@ require('lazy').setup({
     'mbbill/undotree',
 
     -- Easyclip
-    'svermeulen/vim-easyclip',
+    {
+        'svermeulen/vim-easyclip',
+        init = function()
+            -- Avoid the plugin's `set pastetoggle=...` path; the option was
+            -- removed in Neovim 0.12.
+            vim.g.EasyClipUseGlobalPasteToggle = 0
+        end,
+    },
 
     -- NOTE: This is where your plugins related to LSP can be installed.
     --  The configuration is done below. Search for lspconfig to find it below.
