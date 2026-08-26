@@ -77,16 +77,6 @@ require('lazy').setup({
     -- Undo history
     'mbbill/undotree',
 
-    -- Easyclip
-    {
-        'svermeulen/vim-easyclip',
-        init = function()
-            -- Avoid the plugin's `set pastetoggle=...` path; the option was
-            -- removed in Neovim 0.12.
-            vim.g.EasyClipUseGlobalPasteToggle = 0
-        end,
-    },
-
     -- NOTE: This is where your plugins related to LSP can be installed.
     --  The configuration is done below. Search for lspconfig to find it below.
     {
@@ -606,6 +596,45 @@ end, { desc = 'Swap next parameter' })
 vim.keymap.set('n', '<leader>A', function()
     ts_swap.swap_previous '@parameter.inner'
 end, { desc = 'Swap previous parameter' })
+
+-- [[ Cut/delete behaviour ]]
+-- Replaces vim-easyclip (unmaintained since 2019), reproducing the parts of it
+-- that were actually live here. Its yank ring is not carried over: the keys
+-- that drive it, <C-p> and <C-n>, are taken by Telescope and Undotree
+-- elsewhere in this file, so it was already unreachable.
+
+-- `m` cuts (easyclip's "move"), which is why plain `d` can throw text away.
+-- NOTE: this shadows the mark key, exactly as easyclip did.
+vim.keymap.set({ 'n', 'x' }, 'm', 'd', { desc = 'Cut' })
+vim.keymap.set('n', 'mm', 'dd', { desc = 'Cut line' })
+
+-- Deletes go to the black hole so they never clobber the last yank -- which
+-- matters more here than it looks, because 'clipboard' is unnamedplus, so an
+-- unredirected delete would overwrite the system clipboard.
+-- As with easyclip, this means `"add` cannot delete into a named register.
+for _, op in ipairs { 'd', 'c', 'x' } do
+    vim.keymap.set({ 'n', 'x' }, op, '"_' .. op, { desc = 'Black-hole ' .. op })
+end
+
+-- Visual paste keeps the register, rather than swapping in what it replaced.
+vim.keymap.set('x', 'p', 'P', { desc = 'Paste over selection' })
+vim.keymap.set('x', 'P', 'P', { desc = 'Paste over selection' })
+
+-- Yank without moving the cursor, as easyclip did.
+local yank_cursor
+vim.keymap.set({ 'n', 'x' }, 'y', function()
+    yank_cursor = vim.api.nvim_win_get_cursor(0)
+    return 'y'
+end, { expr = true, desc = 'Yank (keeps cursor position)' })
+vim.api.nvim_create_autocmd('TextYankPost', {
+    group = vim.api.nvim_create_augroup('yank-keep-cursor', { clear = true }),
+    callback = function()
+        if yank_cursor then
+            pcall(vim.api.nvim_win_set_cursor, 0, yank_cursor)
+            yank_cursor = nil
+        end
+    end,
+})
 
 -- [[ Undotree configuration ]]
 vim.keymap.set('n', '<C-n>', ':UndotreeToggle<CR>')
