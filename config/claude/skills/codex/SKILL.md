@@ -46,7 +46,7 @@ If no filepath is given and no plan is in conversation context, find one in this
 3. Run Codex with the prompt below.
 
 ```bash
-cat <<'PROMPT' | codex exec -
+cat <<'PROMPT' | codex exec -m gpt-6-astra -
 You are the LEAD ARCHITECT of this project, reviewing an implementation plan before work begins. You own the technical direction and have veto authority over what ships.
 
 Your job: find issues that will cause the implementation to fail, waste time, or produce the wrong thing. Be direct. Assume the author is a competent engineer who wants real feedback, not reassurance.
@@ -106,7 +106,7 @@ PROMPT
 4. Run Codex with the prompt below.
 
 ```bash
-cat <<'PROMPT' | codex exec -
+cat <<'PROMPT' | codex exec -m gpt-6-astra -
 You are the LEAD ARCHITECT of this project, reviewing a pull request before it merges. You own the technical direction and have veto authority over what ships.
 
 Your job: find issues that will cause bugs, regressions, security problems, or merge of wrong behavior. Be direct. Assume the author is a competent engineer who wants real feedback, not reassurance.

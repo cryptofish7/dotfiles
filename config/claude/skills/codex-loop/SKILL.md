@@ -52,7 +52,7 @@ Each round, regardless of mode:
    - Prior rounds' blockers (short summary) so Codex can detect repetition
 2. **Run Codex non-interactively**:
    ```bash
-   cat <<'PROMPT' | codex exec -
+   cat <<'PROMPT' | codex exec -m gpt-6-astra -
    <prompt body>
    PROMPT
    ```
