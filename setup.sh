@@ -35,4 +35,9 @@ ln -sf "$DOTFILES/config/codex/config.toml" "$HOME/.codex/config.toml"
 ln -sfn "$DOTFILES/config/codex/skills" "$HOME/.codex/skills"
 ln -sfn "$DOTFILES/config/codex/agents" "$HOME/.codex/agents"
 
+# Agents (cross-tool skills, e.g. vercel-labs skills installer)
+mkdir -p "$HOME/.agents"
+[ -d "$HOME/.agents/skills" ] && [ ! -L "$HOME/.agents/skills" ] && rm -rf "$HOME/.agents/skills"
+ln -sfn "$DOTFILES/config/agents/skills" "$HOME/.agents/skills"
+
 echo "Done"

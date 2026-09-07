@@ -1,0 +1,167 @@
+---
+name: docs-consolidator
+description: Audit and consolidate project documentation in the docs/ folder, including AGENTS.md optimization. Use when the user wants to clean up docs, check docs are up to date, deduplicate information across docs, ensure information lives in the right doc, reorganize documentation, or slim down AGENTS.md files. Triggers on "consolidate docs", "clean up documentation", "audit docs", "organize docs", "sync docs with code", "audit claudemd", "review AGENTS.md", "slim down AGENTS.md", "optimize AGENTS.md", "claudemd audit".
+---
+
+# Docs Consolidator
+
+Audit, deduplicate, and reorganize project documentation so every piece of information has one home and all docs stay current.
+
+## Workflow
+
+### Phase 1: Build the inventory
+
+1. Check if `.Codex/doc-registry.md` exists in the project root.
+   - **If it exists:** read it and use it as the authoritative registry. Skip to step 4.
+   - **If it doesn't exist:** continue to step 2 to discover and generate one.
+2. Find all documentation files: scan `docs/`, root `AGENTS.md` (or `docs/AGENTS.md` if symlinked), `README.md`, and any other `.md` files referenced by AGENTS.md.
+3. For each doc, read it and note:
+   - What information it currently contains (section-level summary)
+   - Its apparent purpose (infer from filename, headers, and content)
+   - Its line count
+4. If no registry existed, build one: assign each doc a purpose and ownership domain. Use these common categories as a guide:
+   - **AGENTS.md** — Orientation for Codex sessions: conventions, gotchas, pointers. NOT a wiki.
+   - **PRD / product doc** — Product logic, user stories, feature specs, business rules
+   - **Architecture doc** — System design, data flow, database schema, API endpoints
+   - **Tasks / progress doc** — Current tasks, completed work, backlog
+   - **Deployment / CI-CD docs** — Deployment config, pipelines, environment setup
+   - **Security docs** — Threat models, trust assumptions, audit scope
+   - **Testing docs** — Test checklists, QA guides
+   - **Setup / infra docs** — Database setup, service config, hosting details
+5. If the registry was generated (not loaded from file), write it to `.Codex/doc-registry.md` in the project root using this format:
+
+```markdown
+# Document Registry
+
+Each doc has ONE purpose. Information belongs in the doc that owns that domain.
+
+| File | Purpose | Owns |
+|------|---------|------|
+| `path/to/doc.md` | Brief purpose | What information this doc is the canonical source for |
+
+## Overlap Rules
+
+- [category] → `canonical-doc.md`, not [other doc]
+```
+
+Present the generated registry to the user and ask for approval before continuing. The user may want to adjust purposes or ownership boundaries.
+
+### Phase 2: Identify problems
+
+Read every doc (if not already read in Phase 1) and compare against the registry. Flag:
+
+- **Misplaced information**: content that belongs in a different doc per ownership rules (e.g., architecture details in AGENTS.md, progress updates in an architecture doc)
+- **Duplication**: the same information restated in multiple docs. Identify the canonical home and where the duplicates are.
+- **Stale content**: references to removed code, outdated addresses, old instructions, TODOs that are done, etc. Cross-check against actual code when uncertain.
+- **Missing information**: important topics not documented anywhere, or docs that reference sections that don't exist.
+- **Poor organization**: docs where sections are out of logical order, or where related information is scattered across unrelated sections.
+- **Undocumented feature**: Examine the current branch name, recent commits, and changed files to determine if a significant new feature was implemented. Check each doc in the registry to see if it needs updating for this feature. For example: does the tasks/progress doc need a new milestone? Does the architecture doc need new components or APIs? Does a security doc need new threat analysis? Flag each doc that needs additions.
+
+#### Tasks tracker audit
+
+If the registry identifies a tasks/progress doc (e.g., `docs/TASKS.md`), audit it for:
+
+- **Untick'd completed work**: cross-check recent commits on the current branch + any merged PRs since the last edit against open `[ ]` items. Flag any item whose work has shipped — Phase 4 will tick `[x]`.
+- **PR-ref qualifiers**: `(PR #N)`, `(#N)`, or `branch: foo/bar` in task descriptions, sub-bullets, or section headings. Git log/blame is the audit trail — flag for strip.
+- **Parenthetical scope notes appended at tick time**: implementation-detail descriptions tacked onto ticked items (column counts, component names, prop additions, layout descriptions). Same audit-trail principle as PR-ref qualifiers — flag for strip.
+- **Over-decomposed sub-bullets**: nested items at PR-contents resolution that don't help a future reader understand what scope was completed. Flag for fold into the parent item.
+- **Tombstone phases**: whole sections marked "Superseded" / "Replaced by" preserved with their original content. Flag for collapse to a one-liner or deletion.
+- **Per-PR milestones**: a new milestone created for a single PR when an existing milestone's scope would have fit. Flag for fold.
+
+#### AGENTS.md deep audit
+
+Additionally, collect all AGENTS.md files (root, `packages/*/AGENTS.md`, `~/.Codex/AGENTS.md`, `~/.Codex/projects/<project-path>/AGENTS.md`) and audit them for:
+
+- **Redundancy**: instructions that say the same thing in different words within one file, rules restated across multiple AGENTS.md files, content that duplicates referenced docs, sections that restate framework/tool defaults Codex already knows.
+- **Verbosity**: wordy phrasing that can be compressed without losing meaning. Apply the "would a senior engineer need this spelled out?" test. Flag overlong examples, unnecessary caveats, and multi-sentence rules that could be one sentence.
+- **Memory candidates**: stable, rarely-changing content that doesn't need to be in the repo — personal preferences, environment-specific paths/URLs, user-specific tool configs, local port assignments. These belong in project memory (`~/.Codex/projects/<path>/AGENTS.md`), not the repo.
+
+### Phase 3: Present the plan
+
+Present findings as a structured report to the user:
+
+```
+## Doc Audit Report
+
+### Misplaced Information
+- [ ] [source doc] → [target doc]: [what to move]
+
+### Duplications
+- [ ] [info]: found in [doc A] and [doc B]. Keep in [canonical doc], remove from [other].
+
+### Stale Content
+- [ ] [doc]: [what's stale and why]
+
+### Organization Issues
+- [ ] [doc]: [what to reorder/restructure]
+
+### AGENTS.md Optimization
+#### Redundancy
+- [ ] [file] lines X-Y: [description] — duplicates [other location]
+#### Verbosity
+- [ ] [file] lines X-Y: [current text snippet] → [compressed version]
+#### Memory Candidates
+- [ ] [file] lines X-Y: [content] — stable/personal, move to project memory
+```
+
+Ask the user to approve the plan before making any changes.
+
+### Phase 4: Execute changes
+
+After approval, apply changes doc by doc:
+
+1. Move misplaced content to the correct doc
+2. Deduplicate — keep the best version in the canonical location, replace duplicates with a brief cross-reference (e.g., "See `ARCHITECTURE.md` for database schema")
+3. Remove or update stale content
+4. Reorder sections for logical flow
+5. Update any cross-references that broke due to moves
+6. Document new features across relevant docs:
+   - For each doc flagged as needing feature documentation, add content to the appropriate existing sections following the doc's style.
+   - Tasks/progress docs: tick `[x]` items completed by the current branch/PR. Strip any `(PR #N)` / `(#N)` / `branch:` qualifiers **and parenthetical scope notes describing implementation detail** from descriptions and headings. Add new milestone entries only for genuinely new scope; otherwise fold into the matching existing milestone. Items describe outcomes, not PR contents. Collapse "Superseded" tombstones to a one-liner or delete. Run a hygiene pass on neighboring items each edit.
+     - **Tick only — don't annotate.** When ticking an existing item to `[x]`, do NOT append a parenthetical scope note describing what shipped, a date stamp, or a verification observation tail. Forbidden patterns:
+       - `[x] Leaderboard page (8-column table layout, pill sort/period filter row, …)` ← implementation scope ❌
+       - `[x] Wallet activity panel (adds scope dropdown + popover focus management)` ← implementation scope ❌
+       - `[x] Header shows "Login" button — verified 3/17/2026` ← date stamp ❌
+       - `[x] Header shows "Login" button — verified 2026-03-17: logged out, header showed blue "Login" button` ← date stamp + observation tail ❌
+       - `[x] Trade panel — partial 2026-05-12: only bear branch confirmed` ← partial-verification tail ❌
+       - `[x] Trade panel — note: observed slippage popover at 12px offset` ← point-in-time observation ❌
+       - `[x] Item wording (PR #471)` ← PR reference ❌
+       - `[x] Leaderboard page` ← tick only ✅
+     - `[x]` already means "verified in browser with screenshot evidence." Git blame is the timestamp. The existing wording is the outcome; specific observed values are point-in-time and rot. If you need to record evidence for yourself, it lives in the PR description or test fixtures, not the tracker. If the existing wording is so vague the outcome isn't clear, fix the wording in a separate hygiene pass — never as an annotation at tick time.
+   - Architecture docs: add new components, endpoints, schemas, or data flows.
+   - Product/PRD docs: add new feature specs or user flows.
+   - Security docs: add new trust assumptions or threat analysis.
+   - AGENTS.md: additions must pass all three tests, or they go elsewhere:
+     1. **Grep test** — would a 5-minute code read or `grep` surface this? If yes, don't write it. Hook names, file paths, function signatures, component lists, UI flow steps, API field lists all fail this test. AGENTS.md is for things that bite *silently* — knowledge no amount of reading the code reveals.
+     2. **Length test** — your entry is ≤3 sentences. If you need more, you're writing `docs/`. Move the body there and leave a one-line cross-reference here.
+     3. **6-month test** — read your wording as if 6 months have passed. Does it still hold, or does it rot? Anything tied to a PR, a "currently", a "new in", a specific component name that could be renamed, or a "the flow is now…" framing fails this test. Describe the durable invariant, not the current implementation.
+
+     If your edit fails any test, the right answer is almost always "add it to the appropriate doc in `docs/` and update the cross-reference here, if one's needed at all." Adding nothing to AGENTS.md is a valid outcome of feature work.
+   - Only update docs where the feature introduces something new for that doc's domain. Don't force updates.
+   - All existing guidelines apply: prefer cross-references over duplication, keep AGENTS.md lean, preserve writing style, one source of truth per topic.
+7. Apply approved AGENTS.md optimizations:
+   - Compress approved verbose sections in-place
+   - Remove approved redundant content
+   - Move approved memory candidates to `~/.Codex/projects/<path>/AGENTS.md` (create the file if needed, append to existing)
+
+### Phase 5: Verify
+
+1. Check that every doc has the content it should own and nothing else
+2. Grep for broken cross-references (doc paths, section links)
+3. If AGENTS.md has a "Reference Documents" section, confirm it matches the actual docs
+4. For any new feature detected, confirm each flagged doc was updated and new content is in the correct section per the registry.
+5. Present a brief summary of all changes made
+
+## Guidelines
+
+- **Doc hygiene (universal).** When writing or editing any doc, strip pollution: (a) `(PR #N)`, `(#N)`, or `branch: foo/bar` qualifiers in headings/items — git log/blame is the audit trail; (b) PR-numbered sub-sections that should fold into the surrounding section; (c) "Superseded" / "Replaced by" tombstones — collapse to one line or delete; (d) "(new in vN)" / "(post X migration)" qualifiers that turn stale once X ships. On any edit to an existing doc, run a hygiene pass on neighboring items. Two genres get dedicated doctrine on top of this rule: regression checklists (see BUG_BASH_GUIDE Discipline in the project AGENTS.md) and forward-looking trackers (see Tasks Tracker Discipline). Stable reference docs (PRD, architecture, security, design system) just follow the universal rule — don't add doc-specific doctrine for them.
+- Prefer cross-references over duplication. A one-line pointer is better than a restated paragraph.
+- Don't merge docs unless the user explicitly asks. The goal is to put information in the right place, not reduce the number of files.
+- Preserve the user's writing style and voice. Clean up structure, not prose.
+- When uncertain whether content is stale, flag it for the user rather than deleting.
+- If an `archive/` directory exists, move superseded docs there rather than deleting.
+- Keep AGENTS.md lean: orientation, commands, conventions, gotchas. Everything else belongs in a specific doc.
+- For AGENTS.md verbosity fixes, show before/after so the user can judge.
+- Conservative memory moves: only suggest moving content that is truly stable and personal/environment-specific. Repo-essential content stays in the repo.
+- Don't touch intentionally detailed sections (war stories, "mistakes to avoid") — flag them only if genuinely redundant.
+- No false positives: if a AGENTS.md file is already lean, say so.

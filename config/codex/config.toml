@@ -1,11 +1,22 @@
 model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+model_reasoning_effort = "xhigh"
+notify = [
+    "/Users/cryptofish/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient",
+    "turn-ended",
+]
+service_tier = "default"
 
 [tui]
-status_line = ["git-branch", "model-name", "context-used", "current-dir"]
+status_line = [
+    "git-branch",
+    "model-name",
+    "context-used",
+    "current-dir",
+]
 
 [tui.model_availability_nux]
 "gpt-5.5" = 4
+gpt-6-astra = 1
 
 [projects."/Users/cryptofish/dotfiles"]
 trust_level = "trusted"
@@ -13,6 +24,147 @@ trust_level = "trusted"
 [projects."/Users/cryptofish/workspace/forecaster"]
 trust_level = "trusted"
 
+[projects."/Users/cryptofish/Documents/Codex/2026-08-20/i-w"]
+trust_level = "trusted"
+
+[projects."/Users/cryptofish/Documents/Codex/2026-08-20/realtime-voice-chat"]
+trust_level = "trusted"
+
+[projects."/Users/cryptofish/Documents/Codex/2026-08-20/realtime-voice-chat-2"]
+trust_level = "trusted"
+
+[projects."/Users/cryptofish/Documents/Codex/2026-08-20/how-do-i-activate-chatgpt-voice"]
+trust_level = "trusted"
+
+[projects."/Users/cryptofish/Documents/Codex/2026-08-20/realtime-voice-chat-3"]
+trust_level = "trusted"
+
 [notice.model_migrations]
 "gpt-5.3-codex" = "gpt-5.4"
 "gpt-5.4" = "gpt-5.5"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-08-20T01:19:47Z"
+source_type = "local"
+source = "/Users/cryptofish/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-08-20T00:21:41Z"
+source_type = "local"
+source = "/Users/cryptofish/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[marketplaces.anthropic-agent-skills]
+last_updated = "2026-09-03T17:42:22Z"
+last_revision = "41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f"
+source_type = "git"
+source = "https://github.com/anthropics/skills.git"
+
+[marketplaces.claude-plugins-official]
+last_updated = "2026-09-02T20:30:31Z"
+last_revision = "0120fb83da5d7cdaa52dd11979690f2dc5f76052"
+source_type = "git"
+source = "https://github.com/anthropics/claude-plugins-official.git"
+
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[plugins."sites@openai-bundled"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[plugins."example-skills@anthropic-agent-skills"]
+enabled = true
+
+[plugins."figma@claude-plugins-official"]
+enabled = true
+
+[plugins."frontend-design@claude-plugins-official"]
+enabled = true
+
+[plugins."telegram@claude-plugins-official"]
+enabled = true
+
+[plugins."vercel@claude-plugins-official"]
+enabled = true
+
+[features]
+js_repl = false
+
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
+NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/cryptofish/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
+CODEX_HOME = "/Users/cryptofish/.codex"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = "Control desktop apps on macOS through Computer Use."
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+BROWSER_USE_CODEX_APP_VERSION = "26.814.41957"
+NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/cryptofish/.codex/plugins/cache/openai-bundled/browser/26.814.41957/scripts/browser-service.mjs","sky":"@oai/sky/service"}'
+CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
+
+[mcp_servers.computer-use]
+command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
+args = ["mcp"]
+cwd = "."
+enabled = false
+
+[mcp_servers.paper]
+url = "http://127.0.0.1:29979/mcp"
+
+[mcp_servers.stitch]
+url = "https://stitch.googleapis.com/mcp"
+
+[mcp_servers.stitch.env_http_headers]
+X-Goog-Api-Key = "STITCH_API_KEY"
+
+[desktop]
+external-agent-import-sync-enabled = true
+conversationDetailMode = "STEPS_PROSE"
+sansFontSize = 14
+codeFontSize = 13
+ambient-suggestions-enabled = true
+realtimeVoiceScreenContextEnabled = true
+followUpQueueMode = "queue"
+
+[apps.asdk_app_69c18c28f1188191bf5b8445c4ab0a2e.tools."notion.notion-update-page"]
+approval_mode = "approve"
+
+[hooks.state]
+
+[hooks.state."vercel@claude-plugins-official:hooks/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:3854f8501763b92012b4def8de676279493adfbaec8cc1d00ce72b8e80341b1c"
+
+[hooks.state."vercel@claude-plugins-official:hooks/hooks.json:session_start:0:1"]
+trusted_hash = "sha256:34d8e6e4abd36e2448fe0032fd7a20e075b3c985eea7290379689add51264a03"
+
+[hooks.state."vercel@claude-plugins-official:hooks/hooks.json:session_start:0:2"]
+trusted_hash = "sha256:2ebad29288ff7fb558b111a94eea88404fdd80f7739be1bea8098ddea09b31d0"
+enabled = true

@@ -1,0 +1,109 @@
+---
+name: setup-workflow
+description: Set up the autonomous post-task workflow for a project. Injects the standard development pipeline into AGENTS.md and installs all required skills and agents (docs-consolidator, ci-cd-pipeline, smoke-test, bug-bash-update, code-reviewer, debugger). Use at the start of a new project. Triggers on "setup workflow", "init workflow", "add workflow", or "set up project workflow".
+---
+
+# Setup Workflow
+
+Install the autonomous post-task development pipeline into a project's AGENTS.md. All dependency skills and agents must be installed before running this skill.
+
+## Dependencies
+
+This workflow requires 6 tools:
+
+| Dependency | Type | Live path |
+|-----------|------|-----------|
+| docs-consolidator | Skill | `~/.Codex/skills/docs-consolidator/SKILL.md` |
+| ci-cd-pipeline | Skill | `~/.Codex/skills/ci-cd-pipeline/SKILL.md` |
+| smoke-test | Skill | `~/.Codex/skills/smoke-test/SKILL.md` |
+| bug-bash-update | Skill | `~/.Codex/skills/bug-bash-update/SKILL.md` |
+| code-reviewer | Agent | `~/.Codex/agents/code-reviewer.md` |
+| debugger | Agent | `~/.Codex/agents/debugger.md` |
+
+## Workflow
+
+### Phase 1: Check dependencies
+
+For each dependency in the table above, check if the live file exists:
+
+1. **Skills:** Check that `SKILL.md` exists at the live path.
+2. **Agents:** Check that the agent `.md` file exists at the live path.
+3. **ci-cd-pipeline references:** Also check this additional file:
+   - `~/.Codex/skills/ci-cd-pipeline/references/deploy-prerequisites.md`
+
+If all dependencies are present, proceed to Phase 2.
+
+If any are missing, report which ones and stop:
+```
+Missing dependencies:
+- [dependency name]: expected at [path]
+Install the missing skills/agents before running setup-workflow.
+```
+
+### Phase 2: Detect AGENTS.md
+
+Search for the project's AGENTS.md file:
+1. Check for `AGENTS.md` in the project root
+2. Check for `docs/AGENTS.md`
+3. Check if root `AGENTS.md` is a symlink to `docs/AGENTS.md`
+
+If found, note the path. If not found, note that a new one will be created.
+
+### Phase 3: Read current state
+
+If AGENTS.md exists:
+1. Read it fully
+2. Check if a `## Workflow` section already exists
+3. Note the line range of the existing Workflow section (from `## Workflow` to the next `## ` heading or end of file)
+
+### Phase 4: Inject workflow
+
+Read `references/workflow-template.md` — this is the canonical workflow content.
+
+**If a Workflow section exists:** Replace it (from `## Workflow` up to but not including the next `---` or `## ` heading) with the content of `workflow-template.md`.
+
+**If AGENTS.md exists but has no Workflow section:** Insert the workflow content after the first heading block (title + any introductory text before the first `---`).
+
+**If a `## Quality Standards` section already exists:** Do not inject a duplicate. Only inject the Quality Standards section (from the template) when creating a new AGENTS.md or when no such section exists.
+
+**If a `## BUG_BASH_GUIDE Discipline` section already exists:** Do not inject a duplicate. Only inject this section (from the template) when creating a new AGENTS.md or when no such section exists. Apply the same conditional-inject pattern as Quality Standards.
+
+**If a `## Tasks Tracker Discipline` section already exists:** Do not inject a duplicate. Only inject this section (from the template) when creating a new AGENTS.md or when no such section exists. When injecting into an existing AGENTS.md, place it directly after `## BUG_BASH_GUIDE Discipline` (or after `## Quality Standards` if BUG_BASH_GUIDE Discipline is also absent).
+
+**If no AGENTS.md exists:** Create a new `AGENTS.md` in the project root with this structure:
+```markdown
+# AGENTS.md
+## Project — Development Guide
+
+This file provides context for Codex sessions working on this project.
+
+---
+
+[workflow-template.md content here]
+
+---
+
+## Commands
+
+[Auto-detect from pyproject.toml / package.json / Makefile / Cargo.toml and list the project's lint, format, typecheck, and test commands]
+
+---
+
+## Mistakes to Avoid
+
+*Codex: After any correction, add a rule here. Be specific.*
+```
+
+### Phase 5: Verify
+
+1. Read the updated AGENTS.md
+2. Confirm the Workflow section contains the full pipeline
+3. Confirm no other sections were accidentally modified
+4. Report a summary of all changes made
+
+## Guidelines
+
+- Never modify any section of AGENTS.md outside the Workflow section (unless creating a new file)
+- The workflow template in `references/workflow-template.md` is the single source of truth
+- If auto-detecting commands for a new AGENTS.md, prefer reading the project's config files over guessing
+- If a dependency is missing, tell the user to install it rather than attempting to create it
