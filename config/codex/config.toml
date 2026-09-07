@@ -16,7 +16,7 @@ status_line = [
 
 [tui.model_availability_nux]
 "gpt-5.5" = 4
-gpt-6-astra = 1
+gpt-6-astra = 3
 
 [projects."/Users/cryptofish/dotfiles"]
 trust_level = "trusted"
@@ -168,3 +168,12 @@ trusted_hash = "sha256:34d8e6e4abd36e2448fe0032fd7a20e075b3c985eea7290379689add5
 [hooks.state."vercel@claude-plugins-official:hooks/hooks.json:session_start:0:2"]
 trusted_hash = "sha256:2ebad29288ff7fb558b111a94eea88404fdd80f7739be1bea8098ddea09b31d0"
 enabled = true
+
+[hooks.state."/Users/cryptofish/.codex/hooks.json:user_prompt_submit:0:0"]
+trusted_hash = "sha256:133e44c6691fc0a03ad91159db0628d01ad3d90d32cd3e4cfb587c63c7938434"
+
+[hooks.state."/Users/cryptofish/.codex/hooks.json:user_prompt_submit:1:0"]
+trusted_hash = "sha256:03f9dc677a115117ed953c287a6240f09fdc8347e2d8b80f169f3cde112c2ee1"
+
+[hooks.state."vercel@claude-plugins-official:hooks/hooks.json:session_end:0:0"]
+trusted_hash = "sha256:5612c7e3703ff80a8463df9f42b5c4c21a21578c072ea585f90ebcfca2547929"
