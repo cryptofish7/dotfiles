@@ -20,7 +20,7 @@ If you were spawned as a Task Runner by an orchestrator (like Ralph), follow the
 | Subagent    | Model / effort              | How to spawn                        | Purpose                                          | Writes code? |
 | ----------- | ---------------------------- | ------------------------------------ | ------------------------------------------------- | ------------ |
 | Planner     | Fable 5.1, high effort       | `planner` agent                      | Breaks down the goal into `TODO.md`               | No           |
-| Reviewer    | GPT 5.6 Sol via `/codex`, high effort | `reviewer` agent            | Adversarially audits `TODO.md` (plan) and diffs (code) | No      |
+| Reviewer    | via `/codex` (model/effort pinned inside that skill) | `reviewer` agent            | Adversarially audits `TODO.md` (plan) and diffs (code) | No      |
 | Implementer | Sonnet 5, low effort          | `implementer` agent                  | Executes one `TODO.md` task at a time, writes tests | Yes         |
 
 There is no separate debugger agent — Implementer is the only failure-diagnosis step (see its `.claude/agents/implementer.md` constraints). A test/build/CI failure gets routed back to Implementer with the failure output, not to a dedicated debugging specialist.
