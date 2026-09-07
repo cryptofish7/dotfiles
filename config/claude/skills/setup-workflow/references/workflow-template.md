@@ -13,24 +13,31 @@
 
 If you were spawned as a Task Runner by an orchestrator (like Ralph), follow the Pipeline section of your prompt instead of this workflow.
 
-**You are the orchestrator.** Your role is to coordinate subagents, verify results, and make decisions. Do NOT write implementation code directly. All code generation of more than ~10 lines goes to a subagent via the Task tool. This preserves your context window for coordination across the full task lifecycle.
+**You are the orchestrator.** You run on Sonnet 5. Your role is to coordinate state, route data between subagents, and control the workflow loop — you do NOT write implementation code directly and do NOT audit plans or diffs yourself. All code generation goes to Implementer; all plan/code audits go to Reviewer. This preserves your context window for coordination across the full task lifecycle.
 
 **Subagent roster:**
 
-| Subagent | How to spawn | Purpose | Writes code? |
-|----------|-------------|---------|-------------|
-| Planner | Task tool (`subagent_type=Explore`) | Analyze code, produce implementation plan | No |
-| Implementer | Task tool (`subagent_type=general-purpose`) | Execute approved plan, write code + tests | Yes |
-| Code reviewer | `code-reviewer` agent | Review PR for bugs, security, style | No |
-| Debugger | `debugger` agent | Diagnose and fix errors, CI failures | Yes |
+| Subagent    | Model / effort              | How to spawn                        | Purpose                                          | Writes code? |
+| ----------- | ---------------------------- | ------------------------------------ | ------------------------------------------------- | ------------ |
+| Planner     | Fable 5.1, high effort       | `planner` agent                      | Breaks down the goal into `TODO.md`               | No           |
+| Reviewer    | GPT 5.6 Sol via `/codex`, high effort | `reviewer` agent            | Adversarially audits `TODO.md` (plan) and diffs (code) | No      |
+| Implementer | Sonnet 5, low effort          | `implementer` agent                  | Executes one `TODO.md` task at a time, writes tests | Yes         |
 
-**Development flow:**
+There is no separate debugger agent — Implementer is the only failure-diagnosis step (see its `.claude/agents/implementer.md` constraints). A test/build/CI failure gets routed back to Implementer with the failure output, not to a dedicated debugging specialist.
 
-1. **Plan**: Use the Task tool to spawn an Explore subagent. Pass it the task description, file structure, and relevant docs. It reads code and returns an implementation plan. Review the plan yourself — check for completeness, gaps, and alignment with the task. If it's lacking, re-plan with more specific instructions. Do not ask the user to approve the plan.
-2. **Branch**: Create a feature branch from main: `git checkout -b <type>/<short-slug>` (e.g., `feat/core-types`, `fix/timestamp-bug`). All implementation happens on this branch.
-3. **Implement**: Once the plan looks solid, use the Task tool to spawn an implementation subagent. Pass it the full approved plan and CLAUDE.md conventions. The subagent writes all code and tests.
-4. **Verify**: After the subagent completes, run the full verify suite (lint, format, typecheck, test). If verification fails, spawn the `debugger` agent for test failures or a Task subagent for lint/type errors.
-5. When stuck or going in circles, stop. Re-plan before continuing.
+**Operational loop:**
+
+1. **PHASE 1 — Planning**: Spawn the `planner` agent with the user goal. It reads the codebase and writes `TODO.md` in the project root. Do not write functional code yourself at this stage.
+2. **PHASE 2 — Plan audit**: Spawn the `reviewer` agent and instruct it to audit `TODO.md` for architectural flaws, missing edge cases, or security blind spots.
+   - `PLAN FAIL` → pass the critique back to `planner` to rewrite `TODO.md`, then re-audit.
+   - `PLAN PASS` → proceed to Phase 3.
+   - Cap at 3 plan-audit rounds. If still failing, stop and ask the user for help.
+3. **PHASE 3 — Execution**: Create a feature branch from main: `git checkout -b <type>/<short-slug>`. Read the approved `TODO.md` and, for each task item, spawn `implementer` with that single task plus CLAUDE.md conventions. If a task's change fails lint/typecheck/build/test, `implementer` self-corrects before returning — you do not spawn a separate fixer.
+4. **PHASE 4 — Code audit**: Once all `TODO.md` tasks are implemented, spawn `reviewer` to audit the resulting diff against `TODO.md`'s requirements.
+   - `CODE FAIL` → pass the critique back to `implementer` (targeted at the flagged task) to fix, then re-audit.
+   - `CODE PASS` → proceed to the post-task pipeline below.
+   - Cap at 3 code-audit rounds. If still failing, stop and ask the user for help.
+5. When stuck or going in circles beyond the caps above, stop. Re-plan (back to Phase 1) before continuing.
 
 **When the orchestrator acts directly** (exceptions):
 - Git operations (commit, branch, push, merge)
@@ -39,7 +46,7 @@ If you were spawned as a Task Runner by an orchestrator (like Ralph), follow the
 - Task tracker updates
 - Spawning audit subagents (docs, CI/CD, smoke test) — see Step 2 of the post-task pipeline
 
-**Verification protocol**: After any subagent writes code, the orchestrator runs the full verify suite before proceeding. Never trust subagent output without verification.
+**Verification protocol**: After Implementer writes code, the orchestrator runs the full verify suite before proceeding. Never trust subagent output without verification.
 
 **Progress tracking**: Use TaskCreate to register each development and pipeline step. Prefix every `subject` and `activeForm` with the responsible agent in brackets so the user can see who's doing what (e.g., `subject: "[Planner] Plan: add auth"`, `activeForm: "[Planner] Planning auth"`). Mark `in_progress` when starting, `completed` when done. The user sees live progress via `Ctrl+T`.
 
@@ -48,15 +55,15 @@ If you were spawned as a Task Runner by an orchestrator (like Ralph), follow the
 Run this pipeline after every completed task. No user input required unless a step fails and cannot be auto-resolved.
 
 **Step 1: Verify locally.**
-Spawn a subagent to run the project's linting, formatting, type checking, and test commands. The subagent checks the Commands section of this file or `pyproject.toml`/`package.json`/`Makefile` for the exact commands, fixes any failures, and reports pass/fail.
+Spawn `implementer` to run the project's linting, formatting, type checking, and test commands. The subagent checks the Commands section of this file or `pyproject.toml`/`package.json`/`Makefile` for the exact commands. On failure, it self-corrects (no separate debugger); report final pass/fail.
 
 **Step 2: Audit docs, CI/CD, and deploy script (parallel).**
-Spawn these as **parallel Task subagents** (`subagent_type=general-purpose`). Each subagent gets the relevant skill instructions and an explicit directive: "Execute autonomously. Do not ask the user for approval — review your own plan and proceed."
+Spawn these as **parallel Task subagents** (`subagent_type=general-purpose`) pinned to the model noted per step. Each subagent gets the relevant skill instructions and an explicit directive: "Execute autonomously. Do not ask the user for approval — review your own plan and proceed."
 
-- **Docs audit**: Read `~/.claude/skills/docs-consolidator/SKILL.md` and pass its contents. The subagent audits and consolidates project docs.
-- **CI/CD audit**: Read `~/.claude/skills/ci-cd-pipeline/SKILL.md` and pass its contents. The subagent ensures GitHub Actions matches the current project state.
-- **Deploy script update**: Read `~/.claude/skills/smoke-test/SKILL.md` and pass its contents. The subagent updates `scripts/deploy.sh` to deploy any new services locally and health-check them.
-- **Bug bash update**: Read `~/.claude/skills/bug-bash-update/SKILL.md` and pass its contents. The subagent updates docs/BUG_BASH_GUIDE.md with new checklist items for features and fix annotations for bugs. For bug fixes, it verifies the fix in the browser before marking [x].
+- **Docs audit** (Haiku 4.5): Read `~/.claude/skills/docs-consolidator/SKILL.md` and pass its contents. The subagent audits and consolidates project docs.
+- **CI/CD audit** (Sonnet 5, low effort): Read `~/.claude/skills/ci-cd-pipeline/SKILL.md` and pass its contents. The subagent ensures GitHub Actions matches the current project state.
+- **Deploy script update** (Sonnet 5, low effort): Read `~/.claude/skills/smoke-test/SKILL.md` and pass its contents. The subagent updates `scripts/deploy.sh` to deploy any new services locally and health-check them.
+- **Bug bash update** (Sonnet 5, low effort): Read `~/.claude/skills/bug-bash-update/SKILL.md` and pass its contents. The subagent updates docs/BUG_BASH_GUIDE.md with new checklist items for features and fix annotations for bugs. For bug fixes, it verifies the fix in the browser before marking [x].
 
 Skip any if the skill is unavailable. Wait for all subagents to complete before proceeding.
 
@@ -73,20 +80,20 @@ Stage and commit everything from the task and from Step 2. Write a concise, desc
 **Step 5: Code review and CI (parallel).**
 Start both immediately after opening the PR:
 
-- **5a**: Spawn the `code-reviewer` subagent to review the PR.
+- **5a**: Spawn the `reviewer` agent (Phase 4 code audit, `CODE PASS`/`CODE FAIL` — see Operational loop above) against the PR.
 - **5b**: Run `gh pr checks --watch --fail-fast` to monitor CI.
 
 Handling results:
-- If review returns Critical or Warning findings:
-  - **3+ line fixes**: Spawn a Task subagent to apply them. Do not fix directly.
+- On `CODE FAIL`, or a `CODE PASS` with "Minor fixes" noted, address every finding before merging:
+  - **3+ line fixes**: Spawn `implementer` to apply them. Do not fix directly.
   - **1-2 line fixes**: The orchestrator may apply these directly.
-  - Commit and push fixes. CI restarts automatically on the new push.
+  - Commit and push fixes. CI restarts automatically on the new push. Re-run `reviewer` on `CODE FAIL` before proceeding.
 - If CI fails:
   1. Identify the failure: `gh pr checks` then `gh run view <run-id> --log-failed`.
-  2. Spawn the `debugger` subagent with the failure context.
+  2. Spawn `implementer` with the failure context to self-correct — there is no separate debugger.
   3. Apply the fix on the same branch, commit, and push.
   4. Max 3 CI retries. If still failing, stop and ask the user for help.
-- **Proceed to Step 6 when**: review is clean (APPROVE or only Nits) AND CI passes.
+- **Proceed to Step 6 when**: every review finding is either fixed or justified, AND CI passes.
 
 **Step 6: Merge the PR and clean up.**
 ```bash

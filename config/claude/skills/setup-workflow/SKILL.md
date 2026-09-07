@@ -1,6 +1,6 @@
 ---
 name: setup-workflow
-description: Set up the autonomous post-task workflow for a project. Injects the standard development pipeline into CLAUDE.md and installs all required skills and agents (docs-consolidator, ci-cd-pipeline, smoke-test, bug-bash-update, code-reviewer, debugger). Use at the start of a new project. Triggers on "setup workflow", "init workflow", "add workflow", or "set up project workflow".
+description: Set up the autonomous post-task workflow for a project. Injects the standard development pipeline into CLAUDE.md and installs all required skills and agents (docs-consolidator, ci-cd-pipeline, smoke-test, bug-bash-update, codex, planner, implementer, reviewer). Use at the start of a new project. Triggers on "setup workflow", "init workflow", "add workflow", or "set up project workflow".
 ---
 
 # Setup Workflow
@@ -9,7 +9,7 @@ Install the autonomous post-task development pipeline into a project's CLAUDE.md
 
 ## Dependencies
 
-This workflow requires 6 tools:
+This workflow requires 8 tools:
 
 | Dependency | Type | Live path |
 |-----------|------|-----------|
@@ -17,8 +17,10 @@ This workflow requires 6 tools:
 | ci-cd-pipeline | Skill | `~/.claude/skills/ci-cd-pipeline/SKILL.md` |
 | smoke-test | Skill | `~/.claude/skills/smoke-test/SKILL.md` |
 | bug-bash-update | Skill | `~/.claude/skills/bug-bash-update/SKILL.md` |
-| code-reviewer | Agent | `~/.claude/agents/code-reviewer.md` |
-| debugger | Agent | `~/.claude/agents/debugger.md` |
+| codex | Skill | `~/.claude/skills/codex/SKILL.md` |
+| planner | Agent | `~/.claude/agents/planner.md` |
+| implementer | Agent | `~/.claude/agents/implementer.md` |
+| reviewer | Agent | `~/.claude/agents/reviewer.md` |
 
 ## Workflow
 
