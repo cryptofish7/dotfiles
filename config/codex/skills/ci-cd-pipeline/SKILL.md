@@ -42,6 +42,12 @@ Based on the discovered project profile, determine what CI jobs are needed. Do N
 
 5. **Deploy** — Platform-specific deploy jobs based on detected deploy targets (Railway, Fly.io, Vercel, etc.).
 
+6. **Cost efficiency** — GitHub bills runner minutes (macOS ~10x Linux, Windows ~2x), so audit every workflow for waste and flag/fix:
+   - **Double-runs:** feature-branch globs (`feat/**`, `fix/**`) in `push:` *alongside* `pull_request` fire both events for the same commit — the workflow runs twice. Trigger on `pull_request` + `push` to the default branch only.
+   - **No concurrency guard:** a workflow without a `concurrency` block runs every superseded commit to completion. Every CI workflow needs one (see Guidelines).
+   - **Over-broad `paths:`:** heavy build/test/verify jobs triggered by `docs/**` or unrelated packages. Scope `paths:` to the files the job depends on.
+   - **Expensive runners on the hot path:** macOS/Windows jobs (formal verification, native builds) running on every commit. Keep them `paths:`-filtered and off feature-branch pushes.
+
 **For each proposed job:**
 - Derive the exact commands from the project's own config files — don't assume default commands.
 - For monorepo/multi-package projects, determine if per-package jobs or matrix jobs are appropriate.
@@ -106,7 +112,10 @@ After approval:
 - All jobs in `ci.yml` should run in parallel unless they have dependencies.
 - Use `actions/checkout@v4` and `actions/setup-python@v5` / `actions/setup-node@v4`.
 - Pin action versions to major tags (e.g., `@v4`), not SHAs.
-- CI triggers: `push` to main/master + `pull_request`. Security: `push` to main + weekly `schedule`.
+- **Triggers — avoid double-runs:** use `pull_request` + `push` to the **default branch only**. Do NOT add feature-branch globs (`feat/**`, `fix/**`) to `push:` — `pull_request` already covers PRs, and having both makes every commit run twice. Security scans: `push` to the default branch + weekly `schedule`.
+- **Concurrency — cancel superseded runs:** give every CI workflow a `concurrency: { group: ${{ github.workflow }}-${{ github.ref }}, cancel-in-progress: true }` block so a newer push cancels in-flight runs on stale commits. EXCEPTION: deploy workflows that mutate shared state use `cancel-in-progress: false` (queue behind an in-flight deploy, never interrupt it).
+- **Path filters — don't rebuild the world:** give expensive build/test/verify jobs a `paths:` filter scoped to the files they depend on. Never trigger heavy compile/verify suites on docs-only or unrelated-package changes.
+- **Runner cost — default to `ubuntu-latest`:** macOS bills ~10x, Windows ~2x. Reserve them for jobs that genuinely need that OS, keep those `paths:`-filtered, and run them on merge / PRs-with-relevant-changes rather than every commit.
 - When adding tooling config, use the project's config file (e.g., `pyproject.toml` for Python, `package.json` for JS).
 - When removing an action, also clean up any orphaned tool configs that were only used by that action.
 - When proposing a CI job, derive the exact commands from the project's own config (package.json scripts, Makefile targets, existing dev scripts) rather than assuming default commands.
