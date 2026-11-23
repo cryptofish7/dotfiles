@@ -33,7 +33,6 @@ PROMPT='[$([[ "$PWD" == "$HOME" ]] && echo "~" || basename "$PWD")${vcs_info_msg
 # PATH
 # ------------------------------
 export PATH="$HOME/.npm-global/bin:$PATH"
-export PATH="$HOME/.n/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
 # ------------------------------
