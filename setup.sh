@@ -23,7 +23,7 @@ ln -sf "$DOTFILES/config/claude/settings.json" "$HOME/.claude/settings.json"
 [ -d "$HOME/.claude/skills" ] && [ ! -L "$HOME/.claude/skills" ] && rm -rf "$HOME/.claude/skills"
 [ -d "$HOME/.claude/agents" ] && [ ! -L "$HOME/.claude/agents" ] && rm -rf "$HOME/.claude/agents"
 [ -d "$HOME/.claude/commands" ] && [ ! -L "$HOME/.claude/commands" ] && rm -rf "$HOME/.claude/commands"
-ln -sfn "$DOTFILES/config/claude/skills" "$HOME/.claude/skills"
+ln -sfn "$DOTFILES/config/agents/skills" "$HOME/.claude/skills"
 ln -sfn "$DOTFILES/config/claude/agents" "$HOME/.claude/agents"
 ln -sfn "$DOTFILES/config/claude/commands" "$HOME/.claude/commands"
 
@@ -32,10 +32,10 @@ mkdir -p "$HOME/.codex"
 ln -sf "$DOTFILES/config/codex/config.toml" "$HOME/.codex/config.toml"
 [ -d "$HOME/.codex/skills" ] && [ ! -L "$HOME/.codex/skills" ] && rm -rf "$HOME/.codex/skills"
 [ -d "$HOME/.codex/agents" ] && [ ! -L "$HOME/.codex/agents" ] && rm -rf "$HOME/.codex/agents"
-ln -sfn "$DOTFILES/config/codex/skills" "$HOME/.codex/skills"
+ln -sfn "$DOTFILES/config/agents/skills" "$HOME/.codex/skills"
 ln -sfn "$DOTFILES/config/codex/agents" "$HOME/.codex/agents"
 
-# Agents (cross-tool skills, e.g. vercel-labs skills installer)
+# Agents: the single source for personal skills (Claude Code, Codex and omp all read it). Project skills live in each repo's .claude/skills.
 mkdir -p "$HOME/.agents"
 [ -d "$HOME/.agents/skills" ] && [ ! -L "$HOME/.agents/skills" ] && rm -rf "$HOME/.agents/skills"
 ln -sfn "$DOTFILES/config/agents/skills" "$HOME/.agents/skills"

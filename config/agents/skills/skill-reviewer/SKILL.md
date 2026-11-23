@@ -14,10 +14,10 @@ Inventory all installed skills and agents, then deep-review selected ones for co
 Scan all skill and agent locations. For each item, count lines in the main file and any reference files.
 
 **Locations:**
-- Global skills: `~/.Codex/skills/*/SKILL.md` + `references/*.md`
-- Global agents: `~/.Codex/agents/*.md`
-- Project skills: `.Codex/skills/*/SKILL.md` + `references/*.md`
-- Project agents: `.Codex/agents/*.md`
+- Global skills: `~/.claude/skills/*/SKILL.md` + `references/*.md`
+- Global agents: `~/.claude/agents/*.md`
+- Project skills: `.claude/skills/*/SKILL.md` + `references/*.md`
+- Project agents: `.claude/agents/*.md`
 
 Build a table sorted by total lines (largest first):
 

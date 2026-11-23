@@ -1,2 +1,4 @@
 config/karabiner/automatic_backups/
-config/codex/skills/.system/
+# Tool-managed skill folders written into the shared skills source (Codex system skills, Claude account-synced skills)
+config/agents/skills/.system/
+config/agents/skills/synced/
