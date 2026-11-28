@@ -1,0 +1,47 @@
+name: Agent checks
+
+# Runs the doc-map check (scripts/ci/check-docs.mjs) and the agent-twin drift check
+# (scripts/ci/gen-claude-agents.mjs --check) with their tests. Both are dependency-free Node
+# scripts, so this job needs no install step and is independent of the app's own stack.
+# On a pull request from a person, check-docs also checks the PR body's `Docs:` line; the body
+# reaches the script only through an env var, never interpolated into script text. Editing the
+# description re-runs the check.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+  push:
+    branches: [{{DEFAULT_BRANCH}}]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  agent-checks:
+    name: Doc map and agent twins
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Depth 2: on a pull request, the merge commit and its first parent, the base it is diffed against.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Script tests
+        run: node --test scripts/ci/__tests__/*.test.mjs
+      - name: Claude agent twins match their omp sources
+        run: node scripts/ci/gen-claude-agents.mjs --check
+      - name: Doc map
+        if: github.event_name != 'pull_request' || github.event.pull_request.user.type == 'Bot'
+        run: node scripts/ci/check-docs.mjs
+      - name: Doc map and Docs line
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.type != 'Bot'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/ci/check-docs.mjs --base HEAD^1
